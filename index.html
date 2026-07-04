@@ -559,7 +559,7 @@ body.light .card { box-shadow: 0 3px 6px rgba(80,66,40,0.30), 0 1px 2px rgba(80,
   <button class="btn" id="btn-online">Online</button>
   <button class="btn" id="btn-stats">Estadísticas</button>
   <button class="btn" id="btn-install" style="display:none;">⤓ Instalar la app</button>
-  <div class="ver">DUO · V7</div>
+  <div class="ver">DUO · V8</div>
 </div>
 
 <!-- CONFIG ONLINE -->
@@ -582,9 +582,19 @@ body.light .card { box-shadow: 0 3px 6px rgba(80,66,40,0.30), 0 1px 2px rgba(80,
   </div>
   <div class="hint" id="mode-desc">Acierta pareja: punto y repites. Falla: turno al siguiente.</div>
   <button class="btn primary" id="btn-create">Crear sala</button>
-  <input class="field" id="join-code" maxlength="4" placeholder="CÓDIGO">
-  <button class="btn" id="btn-join">Unirse</button>
+  <button class="btn" id="btn-goto-join">Unirse a una sala</button>
   <button class="btn" id="btn-online-back">Volver</button>
+</div>
+
+<!-- UNIRSE -->
+<div id="screen-join" class="screen">
+  <div class="title" style="font-size:2rem;">Unirse</div>
+  <div class="tagline">pide el código al anfitrión</div>
+  <input class="field" id="join-code" maxlength="4" placeholder="CÓDIGO"
+         autocapitalize="characters" autocomplete="off" spellcheck="false"
+         style="font-size:1.6rem;letter-spacing:0.45em;">
+  <button class="btn primary" id="btn-join">Entrar</button>
+  <button class="btn" id="btn-join-back">Volver</button>
 </div>
 
 <!-- SALA DE ESPERA -->
@@ -1192,7 +1202,11 @@ const Online = {
     const name = this.myName();
     const cid = 'c' + Math.random().toString(36).slice(2, 9);
     this.ref.transaction(room => {
-      if (room === null) return; // sala inexistente: abortar
+      // Primera pasada: caché local (null si nunca vimos la sala). Devolver un
+      // marcador fuerza el reintento con datos del servidor; abortar aquí sería
+      // rendirse sin preguntar (bug clásico).
+      if (room === null) return { _void: true };
+      if (room._void) return room;
       const players = room.players || {};
       // 1) recuperar mi hueco por nombre (reconexión tras cierre/recarga)
       for (const r of ROLES) {
@@ -1202,23 +1216,32 @@ const Online = {
         }
       }
       // 2) hueco nuevo solo si la sala aún no ha empezado
+      // (un hueco de invitado desconectado en el lobby se puede reutilizar)
       if (room.state === 'waiting') {
         for (let k = 1; k < ROLES.length; k++) {
           const r = ROLES[k];
-          if (!players[r]) {
+          if (!players[r] || !players[r].on) {
             players[r] = { name: name, on: true, _claim: cid };
             room.players = players; return room;
           }
         }
       }
-      return; // llena o en juego sin hueco propio: abortar
-    }).then(res => {
-      if (!res.committed) {
-        this.ref.get().then(s => toast(s.exists() ? 'Sala llena o en juego' : 'Sala no encontrada'));
+      return; // llena o en juego sin hueco propio: abortar de verdad
+    }, undefined, false).then(res => {
+      const val = res.snapshot ? res.snapshot.val() : null;
+      if (res.committed && val && val._void) {
+        // la sala no existía: borrar el marcador que hemos creado
+        this.ref.remove();
+        toast('Sala no encontrada');
         this.ref = null;
         return;
       }
-      const players = (res.snapshot.val() || {}).players || {};
+      if (!res.committed) {
+        toast('Sala llena o en juego');
+        this.ref = null;
+        return;
+      }
+      const players = (val || {}).players || {};
       let mine = null;
       for (const r of ROLES) { if (players[r] && players[r]._claim === cid) mine = r; }
       if (!mine) { toast('No se pudo entrar'); this.ref = null; return; }
@@ -1660,7 +1683,14 @@ $('online-size').addEventListener('click', e => {
   $('online-size').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
 });
 $('btn-create').addEventListener('click', () => Online.create());
+$('btn-goto-join').addEventListener('click', () => {
+  $('join-code').value = '';
+  show('screen-join');
+  setTimeout(() => $('join-code').focus(), 350);
+});
+$('btn-join-back').addEventListener('click', () => show('screen-online'));
 $('btn-join').addEventListener('click', () => Online.join());
+$('join-code').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase(); });
 $('btn-start-match').addEventListener('click', () => Online.startMatch());
 $('btn-share').addEventListener('click', () => {
   const url = location.origin + location.pathname;

@@ -1,5 +1,5 @@
 /* DUO — service worker v1 */
-const CACHE = 'duo-v7';
+const CACHE = 'duo-v8';
 const CARDS = ['ancla','arbol','ballena','barco','calavera','caliz','campana','corona','cuervo','escarabajo','llave','luna','mano','ojo','polilla','reloj','rosa','serpiente','sol','torre'];
 // la música NO se precachea: el fetch handler la guarda en caché en su primer uso
 const ASSETS = ['./','index.html','manifest.json','icon-192.png','icon-512.png']
