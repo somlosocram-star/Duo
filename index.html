@@ -454,7 +454,8 @@ body.light #theme-toggle .knob::after { content: '☀'; }
   <button class="btn primary" id="btn-solo">Contrarreloj</button>
   <button class="btn" id="btn-local">Dos jugadores</button>
   <button class="btn" id="btn-online">Online</button>
-  <div class="ver">DUO · V1</div>
+  <button class="btn" id="btn-install" style="display:none;">⤓ Instalar la app</button>
+  <div class="ver">DUO · V2</div>
 </div>
 
 <!-- CONFIG LOCAL -->
@@ -1139,6 +1140,30 @@ $('btn-rematch').addEventListener('click', () => {
 });
 $('help-btn').addEventListener('click', () => $('tutorial-overlay').classList.add('visible'));
 $('tut-close').addEventListener('click', () => $('tutorial-overlay').classList.remove('visible'));
+
+/* ---------- instalación PWA ---------- */
+let deferredInstall = null;
+function isInstalled() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstall = e;
+  if (!isInstalled()) $('btn-install').style.display = '';
+});
+$('btn-install').addEventListener('click', () => {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  deferredInstall.userChoice.then(res => {
+    if (res.outcome === 'accepted') $('btn-install').style.display = 'none';
+    deferredInstall = null;
+  });
+});
+window.addEventListener('appinstalled', () => {
+  $('btn-install').style.display = 'none';
+  deferredInstall = null;
+  toast('Duo instalado');
+});
 
 /* ---------- precarga de imágenes ---------- */
 CARDS.forEach(n => { const im = new Image(); im.src = n + '.webp'; });
