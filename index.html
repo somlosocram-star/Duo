@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0d0c0a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Duo</title>
+
+<script>
+  (function () {
+    try {
+      if (localStorage.getItem('duo_theme') === 'light') {
+        document.documentElement.classList.add('pre-light');
+      }
+    } catch (e) {}
+    window.addEventListener('DOMContentLoaded', function () {
+      setTimeout(function () {
+        var s = document.getElementById('app-splash');
+        if (s && s.style.display !== 'none') {
+          s.style.transition = 'opacity 0.6s';
+          s.style.opacity = '0';
+          setTimeout(function () { s.style.display = 'none'; }, 650);
+        }
+      }, 5000);
+    });
+  })();
+</script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,700;1,500;1,700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #0d0c0a;
+  --panel: #171512;
+  --panel-2: #1d1a16;
+  --line: #2b2721;
+  --text: #e9e3d5;
+  --muted: #6d6459;
+  --accent: #c4483d;
+  --accent-deep: #9e2b22;
+  --card-paper: #f1ead9;
+  --grain-opacity: 0.5;
+  --vignette: rgba(0,0,0,0.45);
+}
+body.light, html.pre-light body {
+  --bg: #f4f0e6;
+  --panel: #e9e3d4;
+  --panel-2: #efe9dc;
+  --line: #d4ccb8;
+  --text: #2a2218;
+  --muted: #9a8f78;
+  --accent: #9e2b22;
+  --accent-deep: #7d1f18;
+  --card-paper: #faf6ec;
+  --grain-opacity: 0.18;
+  --vignette: rgba(120,100,60,0.10);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Cormorant Garamond', serif;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(158,43,34,0.08) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 80% at 50% 100%, rgba(158,43,34,0.04) 0%, transparent 65%);
+  background-attachment: fixed;
+  position: relative;
+  overscroll-behavior: none;
+  -webkit-user-select: none; user-select: none;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 1;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.9 0 0 0 0 0.85 0 0 0 0 0.75 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: var(--grain-opacity); mix-blend-mode: overlay;
+}
+body::after {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 1;
+  background: radial-gradient(ellipse at center, transparent 55%, var(--vignette) 100%);
+}
+.mono { font-family: 'IBM Plex Mono', monospace; font-feature-settings: "tnum"; }
+
+/* ---- controles flotantes ---- */
+#theme-toggle {
+  position: fixed; top: max(1rem, env(safe-area-inset-top)); right: 1.2rem; z-index: 500;
+  width: 56px; height: 30px; border-radius: 15px;
+  border: 1px solid var(--line); background: var(--panel);
+  cursor: pointer; outline: none; padding: 0; display: flex; align-items: center;
+  transition: background 0.3s, border-color 0.3s;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+}
+#theme-toggle .knob {
+  position: absolute; width: 24px; height: 24px; border-radius: 50%; left: 2px;
+  background: radial-gradient(circle at 35% 30%, #e0705f, #9e2b22 70%, #641711);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.35);
+  transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; line-height: 1;
+}
+#theme-toggle .knob::after { content: '☾'; color: #f4e8dd; }
+body.light #theme-toggle .knob { transform: translateX(26px); }
+body.light #theme-toggle .knob::after { content: '☀'; }
+#sound-toggle, #help-btn {
+  position: fixed; top: max(1rem, env(safe-area-inset-top)); z-index: 500;
+  width: 38px; height: 30px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--panel); color: var(--text);
+  cursor: pointer; outline: none;
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem;
+  display: flex; align-items: center; justify-content: center;
+}
+#sound-toggle { right: 5.2rem; }
+#help-btn { right: 8.4rem; font-weight: 700; }
+#sound-toggle .ic-off { display: none; color: var(--muted); }
+#sound-toggle.muted .ic-on { display: none; }
+#sound-toggle.muted .ic-off { display: inline; }
+
+/* ---- splash inicial ---- */
+#app-splash {
+  position: fixed; inset: 0; z-index: 900;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: var(--bg);
+}
+#app-splash .seal { animation: sealMint 1s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+#app-splash .splash-title {
+  font-size: 3rem; font-style: italic; font-weight: 500; margin-top: 0.4rem;
+  animation: glyphDrop 0.8s 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+#app-splash .splash-sub {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem;
+  letter-spacing: 0.45em; text-transform: uppercase; color: var(--muted);
+  margin-top: 0.7rem;
+  animation: glyphDrop 0.8s 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@keyframes sealMint {
+  0% { opacity: 0; transform: scale(0.3) rotateY(180deg); }
+  60% { opacity: 1; transform: scale(1.08) rotateY(0deg); }
+  100% { opacity: 1; transform: scale(1) rotateY(0deg); }
+}
+@keyframes glyphDrop {
+  0% { opacity: 0; transform: translateY(-30px) scale(1.3); }
+  70% { opacity: 1; transform: translateY(4px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---- sello ---- */
+.seal {
+  width: 62px; height: 62px; border-radius: 50%;
+  border: 1px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 1.4rem; position: relative; flex-shrink: 0;
+  box-shadow: inset 0 0 20px rgba(158,43,34,0.15), 0 0 30px rgba(158,43,34,0.08);
+}
+.seal::before, .seal::after { content: ''; position: absolute; border-radius: 50%; border: 1px solid rgba(158,43,34,0.30); }
+.seal::before { inset: 4px; }
+.seal::after { inset: -9px; border-style: dotted; opacity: 0.5; animation: ringSpin 24s linear infinite; }
+@keyframes ringSpin { to { transform: rotate(360deg); } }
+.seal .glyph {
+  font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 700;
+  font-size: 1.6rem; color: var(--accent); line-height: 1;
+}
+
+/* ---- pantallas ---- */
+.screen {
+  display: none; position: fixed; inset: 0;
+  flex-direction: column; align-items: center; justify-content: center;
+  padding: 1.5rem; text-align: center; z-index: 5; overflow-y: auto;
+}
+.screen.visible { display: flex; animation: screenIn 0.45s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+@keyframes screenIn { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
+
+.title {
+  font-size: clamp(2.6rem, 9vw, 4.2rem);
+  font-weight: 500; font-style: italic; line-height: 0.95; margin-bottom: 0.3rem;
+}
+.tagline {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem;
+  letter-spacing: 0.45em; text-transform: uppercase; color: var(--muted);
+  margin-bottom: 2.2rem;
+}
+.btn {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 10px;
+  padding: 0.95rem 1.2rem; width: min(300px, 82vw);
+  cursor: pointer; margin-bottom: 0.8rem;
+  transition: border-color 0.25s, background 0.25s, transform 0.1s;
+}
+.btn:active { transform: scale(0.97); }
+.btn.primary { border-color: var(--accent); color: var(--accent); }
+.btn.small { width: auto; padding: 0.6rem 1.1rem; font-size: 0.7rem; margin: 0 0.3rem; }
+.btn:disabled { opacity: 0.4; pointer-events: none; }
+.field {
+  font-family: 'IBM Plex Mono', monospace; font-size: 1rem;
+  color: var(--text); background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: 10px;
+  padding: 0.85rem 1rem; width: min(300px, 82vw);
+  margin-bottom: 0.9rem; text-align: center; outline: none;
+  text-transform: uppercase; letter-spacing: 0.2em;
+}
+.field:focus { border-color: var(--accent); }
+.hint {
+  font-size: 1rem; font-style: italic; color: var(--muted);
+  max-width: 320px; margin-bottom: 1.4rem; line-height: 1.35;
+}
+.seg { display: flex; gap: 0.5rem; margin-bottom: 1.3rem; }
+.seg button {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; letter-spacing: 0.1em;
+  color: var(--muted); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 8px;
+  padding: 0.55rem 0.9rem; cursor: pointer;
+}
+.seg button.on { color: var(--accent); border-color: var(--accent); }
+.ver {
+  position: fixed; bottom: max(0.8rem, env(safe-area-inset-bottom)); left: 0; right: 0;
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem;
+  letter-spacing: 0.3em; color: var(--muted); text-align: center; pointer-events: none;
+}
+
+/* ---- HUD de partida ---- */
+#screen-game { justify-content: flex-start; padding: 0; }
+#hud {
+  width: 100%; flex-shrink: 0;
+  padding: calc(max(0.8rem, env(safe-area-inset-top)) + 2.4rem) 1rem 0.6rem;
+  display: flex; align-items: center; justify-content: center; gap: 1rem;
+}
+#hud .hud-block { text-align: center; min-width: 86px; }
+#hud .hud-label {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.55rem;
+  letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted);
+}
+#hud .hud-value {
+  font-family: 'IBM Plex Mono', monospace; font-size: 1.25rem; font-weight: 700;
+}
+#hud .hud-value.accent { color: var(--accent); }
+.pchip {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem;
+  border: 1px solid var(--line); border-radius: 9px;
+  padding: 0.45rem 0.75rem; min-width: 108px;
+  background: var(--panel); color: var(--muted);
+  transition: border-color 0.3s, color 0.3s, box-shadow 0.3s;
+}
+.pchip .p-name {
+  display: block; letter-spacing: 0.12em; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;
+}
+.pchip .p-score { display: block; font-size: 1.15rem; font-weight: 700; margin-top: 0.1rem; }
+.pchip.turn { border-color: var(--accent); color: var(--text); box-shadow: 0 0 14px rgba(158,43,34,0.25); }
+.pchip.turn .p-score { color: var(--accent); }
+
+/* ---- tablero ---- */
+#board-wrap {
+  flex: 1; width: 100%; display: flex; align-items: center; justify-content: center;
+  padding: 0.4rem 0.6rem calc(max(0.8rem, env(safe-area-inset-bottom)) + 2.6rem);
+  min-height: 0;
+}
+#board {
+  display: grid; gap: clamp(4px, 1.2vw, 9px);
+  width: 100%; height: 100%;
+  max-width: min(100%, calc((100dvh - 210px) * var(--ar, 0.625)));
+  max-height: calc(100dvh - 210px);
+  aspect-ratio: var(--ar, 0.625);
+  align-self: center; justify-self: center;
+  margin: auto;
+}
+.card { perspective: 700px; cursor: pointer; position: relative; }
+.card .ci {
+  position: absolute; inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+.card.flipped .ci, .card.matched .ci { transform: rotateY(180deg); }
+.card .face {
+  position: absolute; inset: 0; border-radius: 9%;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.card .back {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(158,43,34,0.12) 0%, transparent 62%),
+    var(--panel-2);
+  display: flex; align-items: center; justify-content: center;
+}
+.card .back::before {
+  content: ''; position: absolute; inset: 9%;
+  border: 1px dotted rgba(158,43,34,0.55); border-radius: 50%;
+}
+.card .back span {
+  font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 700;
+  color: var(--accent); font-size: clamp(0.9rem, 4.5vw, 1.6rem); opacity: 0.9;
+}
+.card .front {
+  transform: rotateY(180deg);
+  background: var(--card-paper);
+}
+.card .front img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  filter: contrast(1.02);
+}
+.card.matched { pointer-events: none; }
+.card.matched .face { border-color: var(--accent); }
+.card.matched .ci { animation: matchPop 0.45s cubic-bezier(0.3, 1.4, 0.4, 1) both; }
+@keyframes matchPop {
+  0% { transform: rotateY(180deg) scale(1); }
+  45% { transform: rotateY(180deg) scale(1.09); }
+  100% { transform: rotateY(180deg) scale(1); }
+}
+.card.matched::after {
+  content: ''; position: absolute; inset: 0; border-radius: 9%;
+  box-shadow: 0 0 16px rgba(158,43,34,0.35);
+  animation: glowFade 1.1s 0.15s ease-out both; pointer-events: none;
+}
+@keyframes glowFade { 0% { opacity: 1; } 100% { opacity: 0; } }
+.card.shake .ci { animation: cardShake 0.35s ease both; }
+@keyframes cardShake {
+  0%, 100% { transform: rotateY(180deg) translateX(0); }
+  25% { transform: rotateY(180deg) translateX(-4px); }
+  75% { transform: rotateY(180deg) translateX(4px); }
+}
+#exit-btn {
+  position: fixed; bottom: max(0.9rem, env(safe-area-inset-bottom)); left: 50%;
+  transform: translateX(-50%); z-index: 40;
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; letter-spacing: 0.25em;
+  text-transform: uppercase; color: var(--muted);
+  background: none; border: none; cursor: pointer; padding: 0.5rem 1rem;
+}
+
+/* ---- interludio de ronda (contrarreloj) ---- */
+#round-splash {
+  position: fixed; inset: 0; z-index: 80;
+  display: none; flex-direction: column; justify-content: center; align-items: center;
+  background: color-mix(in srgb, var(--bg) 97%, black);
+}
+#round-splash.visible { display: flex; }
+#round-splash .rs-label {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem;
+  letter-spacing: 0.5em; color: var(--muted); text-transform: uppercase;
+}
+#round-splash .rs-num {
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
+  font-size: clamp(5rem, 24vw, 11rem); font-weight: 500; color: var(--accent);
+  line-height: 1; margin: 0.5rem 0;
+  animation: splashIn 0.5s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  text-shadow: 0 0 60px rgba(158,43,34,0.25);
+}
+@keyframes splashIn {
+  0% { opacity: 0; transform: scale(1.4); letter-spacing: 0.2em; }
+  100% { opacity: 1; transform: scale(1); letter-spacing: 0; }
+}
+#round-splash .rs-info {
+  font-size: 1.15rem; font-style: italic; color: var(--text); margin-bottom: 0.4rem;
+}
+#round-splash .rs-time {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; color: var(--muted);
+  margin-bottom: 1.6rem;
+}
+#round-splash .rs-time b { color: var(--accent); }
+
+/* ---- overlays genéricos ---- */
+.overlay {
+  position: fixed; inset: 0; z-index: 700;
+  display: none; flex-direction: column; align-items: center; justify-content: flex-start;
+  background: color-mix(in srgb, var(--bg) 96%, black);
+  padding: calc(max(1rem, env(safe-area-inset-top)) + 1rem) 1.5rem 2rem;
+  overflow-y: auto; text-align: left;
+}
+.overlay.visible { display: flex; }
+.overlay h2 { font-style: italic; font-weight: 500; font-size: 2rem; margin-bottom: 0.2rem; text-align: center; }
+.overlay .tut-sub {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; letter-spacing: 0.4em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 1.6rem; text-align: center;
+}
+.tut-step { display: flex; gap: 0.9rem; max-width: 420px; margin-bottom: 1.1rem; }
+.tut-num {
+  font-family: 'IBM Plex Mono', monospace; font-weight: 700; color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 50%;
+  width: 26px; height: 26px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 0.75rem;
+}
+.tut-text { font-size: 1.1rem; line-height: 1.4; }
+.overlay .btn { align-self: center; margin-top: 1rem; }
+
+/* ---- fin de partida ---- */
+#screen-end .end-label {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem;
+  letter-spacing: 0.45em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem;
+}
+#screen-end .end-big {
+  font-size: clamp(2.2rem, 8vw, 3.4rem); font-style: italic; font-weight: 500;
+  margin-bottom: 0.4rem; line-height: 1.05;
+}
+#screen-end .end-big.accent { color: var(--accent); }
+.times-table {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem;
+  margin: 0.9rem 0 1.4rem; border-collapse: collapse;
+}
+.times-table td { padding: 0.25rem 0.9rem; }
+.times-table td:first-child { color: var(--muted); font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; }
+.times-table tr.total td { border-top: 1px solid var(--line); font-weight: 700; color: var(--accent); font-size: 1rem; }
+.record-tag {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.3em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 1.2rem;
+}
+#online-status {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--muted);
+  margin-bottom: 1rem; min-height: 1.1em; letter-spacing: 0.08em;
+}
+#room-code-big {
+  font-family: 'IBM Plex Mono', monospace; font-size: 2.6rem; font-weight: 700;
+  letter-spacing: 0.35em; color: var(--accent); margin: 0.4rem 0 1rem;
+}
+.toast {
+  position: fixed; top: calc(max(1rem, env(safe-area-inset-top)) + 3.2rem);
+  left: 50%; transform: translateX(-50%); z-index: 800;
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; letter-spacing: 0.1em;
+  background: var(--panel); border: 1px solid var(--accent); color: var(--text);
+  border-radius: 9px; padding: 0.6rem 1rem; opacity: 0;
+  transition: opacity 0.3s; pointer-events: none; max-width: 86vw; text-align: center;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<button id="theme-toggle" aria-label="Cambiar tema"><span class="knob"></span></button>
+<button id="sound-toggle" aria-label="Sonido"><span class="ic-on">♪</span><span class="ic-off">✕</span></button>
+<button id="help-btn" aria-label="Cómo se juega">?</button>
+
+<!-- SPLASH -->
+<div id="app-splash">
+  <div class="seal"><span class="glyph">D</span></div>
+  <div class="splash-title">Duo</div>
+  <div class="splash-sub">memoria &amp; parejas</div>
+</div>
+
+<!-- MENÚ -->
+<div id="screen-menu" class="screen">
+  <div class="seal"><span class="glyph">D</span></div>
+  <div class="title">Duo</div>
+  <div class="tagline">memoria &amp; parejas</div>
+  <button class="btn primary" id="btn-solo">Contrarreloj</button>
+  <button class="btn" id="btn-local">Dos jugadores</button>
+  <button class="btn" id="btn-online">Online</button>
+  <div class="ver">DUO · V1</div>
+</div>
+
+<!-- CONFIG LOCAL -->
+<div id="screen-local" class="screen">
+  <div class="title" style="font-size:2rem;">Dos jugadores</div>
+  <div class="tagline">mismo móvil · por turnos</div>
+  <input class="field" id="p1-name" maxlength="10" placeholder="JUGADOR 1">
+  <input class="field" id="p2-name" maxlength="10" placeholder="JUGADOR 2">
+  <div class="hint">Tamaño del tablero</div>
+  <div class="seg" id="local-size">
+    <button data-p="8" >8 parejas</button>
+    <button data-p="10" class="on">10 parejas</button>
+    <button data-p="12">12 parejas</button>
+  </div>
+  <button class="btn primary" id="btn-local-start">Empezar</button>
+  <button class="btn" id="btn-local-back">Volver</button>
+</div>
+
+<!-- CONFIG ONLINE -->
+<div id="screen-online" class="screen">
+  <div class="title" style="font-size:2rem;">Online</div>
+  <div class="tagline">dos jugadores · por turnos</div>
+  <input class="field" id="online-name" maxlength="10" placeholder="TU NOMBRE">
+  <div class="hint">Tamaño (solo al crear sala)</div>
+  <div class="seg" id="online-size">
+    <button data-p="8">8 parejas</button>
+    <button data-p="10" class="on">10 parejas</button>
+    <button data-p="12">12 parejas</button>
+  </div>
+  <button class="btn primary" id="btn-create">Crear sala</button>
+  <input class="field" id="join-code" maxlength="4" placeholder="CÓDIGO">
+  <button class="btn" id="btn-join">Unirse</button>
+  <button class="btn" id="btn-online-back">Volver</button>
+</div>
+
+<!-- SALA DE ESPERA -->
+<div id="screen-wait" class="screen">
+  <div class="tagline" style="margin-bottom:0.4rem;">código de sala</div>
+  <div id="room-code-big">····</div>
+  <div id="online-status">esperando rival…</div>
+  <button class="btn" id="btn-share">Compartir por WhatsApp</button>
+  <button class="btn" id="btn-wait-back">Cancelar</button>
+</div>
+
+<!-- PARTIDA -->
+<div id="screen-game" class="screen">
+  <div id="hud"></div>
+  <div id="board-wrap"><div id="board"></div></div>
+  <button id="exit-btn">✕ salir</button>
+</div>
+
+<!-- INTERLUDIO DE RONDA -->
+<div id="round-splash">
+  <div class="rs-label">ronda</div>
+  <div class="rs-num" id="rs-num">1</div>
+  <div class="rs-info" id="rs-info"></div>
+  <div class="rs-time" id="rs-time"></div>
+  <button class="btn primary" id="rs-go" style="width:auto;padding:0.9rem 2.4rem;">Adelante</button>
+</div>
+
+<!-- FIN -->
+<div id="screen-end" class="screen">
+  <div class="end-label" id="end-label">partida terminada</div>
+  <div class="end-big" id="end-big">—</div>
+  <div id="end-detail"></div>
+  <div class="record-tag" id="record-tag" style="display:none;">★ nuevo récord</div>
+  <button class="btn primary" id="btn-rematch">Revancha</button>
+  <button class="btn" id="btn-end-menu">Menú</button>
+</div>
+
+<!-- TUTORIAL -->
+<div id="tutorial-overlay" class="overlay">
+  <h2>Cómo se juega</h2>
+  <div class="tut-sub">duo · memoria y parejas</div>
+  <div class="tut-step"><div class="tut-num">1</div><div class="tut-text">Todas las cartas empiezan boca abajo. Toca una para <b>levantarla</b>, y luego otra. Si son <b>iguales</b>, quedan descubiertas.</div></div>
+  <div class="tut-step"><div class="tut-num">2</div><div class="tut-text"><b>Contrarreloj</b>: 5 rondas, cada una con más cartas que la anterior. El cronómetro corre solo dentro de cada ronda y se detiene entre rondas. Gana tu mejor tiempo total.</div></div>
+  <div class="tut-step"><div class="tut-num">3</div><div class="tut-text"><b>Dos jugadores y Online</b>: por turnos. Si aciertas pareja, <b>sumas punto y repites</b>. Si fallas, le toca al rival. Gana quien reúna más parejas.</div></div>
+  <div class="tut-step"><div class="tut-num">★</div><div class="tut-text">El cronómetro del contrarreloj no arranca hasta que tocas la <b>primera carta</b> de la ronda. Respira, mira el tablero… y ve a por todas.</div></div>
+  <button class="btn primary" id="tut-close">Entendido</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   DUO v1 — memoria y parejas
+   Contrarreloj (5 rondas) · Dos jugadores local · Online por turnos
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+const VERSION = 'v1';
+
+const CARDS = ['ancla','arbol','ballena','barco','calavera','caliz','campana','corona','cuervo','escarabajo','llave','luna','mano','ojo','polilla','reloj','rosa','serpiente','sol','torre'];
+const ROUNDS = [[3,4],[4,4],[4,5],[4,6],[5,8]]; // [cols, filas] -> 6,8,10,12,20 parejas
+
+/* ---------- tema ---------- */
+function applyTheme(light) {
+  document.body.classList.toggle('light', light);
+  const tc = document.querySelector('meta[name="theme-color"]');
+  if (tc) tc.setAttribute('content', light ? '#f4f0e6' : '#0d0c0a');
+  try { localStorage.setItem('duo_theme', light ? 'light' : 'dark'); } catch (e) {}
+}
+$('theme-toggle').addEventListener('click', () => applyTheme(!document.body.classList.contains('light')));
+applyTheme((function(){ try { return localStorage.getItem('duo_theme') === 'light'; } catch(e){ return false; } })());
+
+/* ---------- sonido (WebAudio, sin ficheros) ---------- */
+const Snd = {
+  ctx: null, muted: false,
+  init() {
+    if (!this.ctx) {
+      try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+    }
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  },
+  tone(f, t0, dur, type, vol) {
+    if (!this.ctx || this.muted) return;
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = type || 'sine'; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, this.ctx.currentTime + t0);
+    g.gain.exponentialRampToValueAtTime(vol || 0.12, this.ctx.currentTime + t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + t0 + dur);
+    o.connect(g); g.connect(this.ctx.destination);
+    o.start(this.ctx.currentTime + t0); o.stop(this.ctx.currentTime + t0 + dur + 0.05);
+  },
+  flip()  { this.tone(660, 0, 0.07, 'triangle', 0.07); },
+  match() { this.tone(520, 0, 0.12, 'sine', 0.1); this.tone(780, 0.09, 0.16, 'sine', 0.1); },
+  fail()  { this.tone(190, 0, 0.18, 'sawtooth', 0.05); },
+  round() { this.tone(520, 0, 0.1, 'sine', 0.1); this.tone(660, 0.1, 0.1, 'sine', 0.1); this.tone(880, 0.2, 0.2, 'sine', 0.1); },
+  win()   { [523, 659, 784, 1047].forEach((f, i) => this.tone(f, i * 0.13, 0.22, 'sine', 0.11)); }
+};
+(function(){
+  try { Snd.muted = localStorage.getItem('duo_muted') === '1'; } catch(e){}
+  $('sound-toggle').classList.toggle('muted', Snd.muted);
+})();
+$('sound-toggle').addEventListener('click', () => {
+  Snd.muted = !Snd.muted;
+  $('sound-toggle').classList.toggle('muted', Snd.muted);
+  try { localStorage.setItem('duo_muted', Snd.muted ? '1' : '0'); } catch (e) {}
+});
+document.addEventListener('pointerdown', () => Snd.init(), { once: true });
+
+/* ---------- utilidades ---------- */
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = (Math.random() * (i + 1)) | 0;
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function buildDeck(pairs) {
+  const pick = shuffle(CARDS.slice()).slice(0, pairs);
+  return shuffle(pick.concat(pick));
+}
+function fmtTime(ms) {
+  const t = Math.max(0, ms | 0);
+  const m = (t / 60000) | 0, s = ((t % 60000) / 1000) | 0, d = ((t % 1000) / 100) | 0;
+  return (m > 0 ? m + ':' + String(s).padStart(2, '0') : String(s)) + '.' + d;
+}
+let toastTimer = null;
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('visible'));
+  $(id).classList.add('visible');
+}
+
+/* ---------- estado ---------- */
+const G = {
+  mode: null,          // 'solo' | 'local' | 'online'
+  deck: [], cols: 0, rows: 0, pairs: 0,
+  matched: [], flip: [], lock: false,
+  // solo
+  round: 0, times: [], t0: 0, running: false, raf: 0,
+  // local / online
+  names: ['', ''], scores: [0, 0], turn: 0
+};
+
+/* ---------- tablero ---------- */
+function renderBoard() {
+  const b = $('board');
+  b.innerHTML = '';
+  b.style.gridTemplateColumns = `repeat(${G.cols}, 1fr)`;
+  b.style.setProperty('--ar', G.cols / G.rows);
+  G.deck.forEach((name, i) => {
+    const c = document.createElement('div');
+    c.className = 'card'; c.dataset.i = i;
+    c.innerHTML = '<div class="ci">' +
+      '<div class="face back"><span>D</span></div>' +
+      '<div class="face front"><img alt="" draggable="false" src="' + name + '.webp"></div>' +
+      '</div>';
+    c.addEventListener('click', () => onFlip(i));
+    b.appendChild(c);
+  });
+}
+function cardEl(i) { return $('board').children[i]; }
+function setFlipped(i, on) { cardEl(i).classList.toggle('flipped', on); }
+function setMatched(i) { const c = cardEl(i); c.classList.remove('flipped'); c.classList.add('matched'); }
+
+/* ---------- HUD ---------- */
+function renderHud() {
+  const h = $('hud');
+  if (G.mode === 'solo') {
+    h.innerHTML =
+      '<div class="hud-block"><div class="hud-label">ronda</div><div class="hud-value">' + (G.round + 1) + '/5</div></div>' +
+      '<div class="hud-block"><div class="hud-label">tiempo</div><div class="hud-value accent" id="clock">0.0</div></div>' +
+      '<div class="hud-block"><div class="hud-label">total</div><div class="hud-value" id="total-clock">' + fmtTime(sumTimes()) + '</div></div>';
+  } else {
+    h.innerHTML =
+      chipHtml(0) +
+      '<div class="hud-block"><div class="hud-label">parejas</div><div class="hud-value" id="pairs-left">' + pairsLeft() + '</div></div>' +
+      chipHtml(1);
+    updateChips();
+  }
+}
+function chipHtml(p) {
+  return '<div class="pchip" id="chip-' + p + '"><span class="p-name">' + escapeHtml(G.names[p]) + '</span><span class="p-score">' + G.scores[p] + '</span></div>';
+}
+function updateChips() {
+  for (let p = 0; p < 2; p++) {
+    const el = $('chip-' + p); if (!el) continue;
+    el.classList.toggle('turn', G.turn === p);
+    el.querySelector('.p-score').textContent = G.scores[p];
+  }
+  const pl = $('pairs-left'); if (pl) pl.textContent = pairsLeft();
+}
+function pairsLeft() { return G.pairs - (G.matched.filter(Boolean).length / 2); }
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+
+/* ---------- cronómetro (solo) ---------- */
+function sumTimes() { return G.times.reduce((a, b) => a + b, 0); }
+function tick() {
+  if (!G.running) return;
+  const el = $('clock');
+  if (el) el.textContent = fmtTime(performance.now() - G.t0);
+  G.raf = requestAnimationFrame(tick);
+}
+function startClock() {
+  G.t0 = performance.now(); G.running = true;
+  cancelAnimationFrame(G.raf); G.raf = requestAnimationFrame(tick);
+}
+function stopClock() {
+  G.running = false; cancelAnimationFrame(G.raf);
+  return performance.now() - G.t0;
+}
+
+/* =====================================================================
+   CONTRARRELOJ (solo)
+   ===================================================================== */
+function soloStart() {
+  G.mode = 'solo'; G.round = 0; G.times = [];
+  soloPrepRound();
+}
+function soloPrepRound() {
+  const [c, r] = ROUNDS[G.round];
+  G.cols = c; G.rows = r; G.pairs = (c * r) / 2;
+  G.deck = buildDeck(G.pairs);
+  G.matched = new Array(G.deck.length).fill(false);
+  G.flip = []; G.lock = false; G.running = false;
+  renderBoard(); renderHud();
+  show('screen-game');
+  $('rs-num').textContent = G.round + 1;
+  $('rs-info').textContent = G.pairs + ' parejas · ' + c + '×' + r;
+  $('rs-time').innerHTML = G.round === 0 ? 'el tiempo arranca con la primera carta'
+    : 'acumulado: <b>' + fmtTime(sumTimes()) + '</b>';
+  $('round-splash').classList.add('visible');
+}
+$('rs-go').addEventListener('click', () => {
+  $('round-splash').classList.remove('visible');
+  Snd.round();
+});
+function soloRoundEnd() {
+  const t = stopClock();
+  G.times.push(t);
+  const clockEl = $('clock'); if (clockEl) clockEl.textContent = fmtTime(t);
+  const totalEl = $('total-clock'); if (totalEl) totalEl.textContent = fmtTime(sumTimes());
+  if (G.round < ROUNDS.length - 1) {
+    G.round++;
+    Snd.round();
+    setTimeout(soloPrepRound, 850);
+  } else {
+    setTimeout(soloEnd, 850);
+  }
+}
+function soloEnd() {
+  Snd.win();
+  const total = sumTimes();
+  let best = null;
+  try { best = parseFloat(localStorage.getItem('duo_best') || ''); } catch (e) {}
+  const isRecord = !(best > 0) || total < best;
+  if (isRecord) { try { localStorage.setItem('duo_best', String(total)); } catch (e) {} }
+  $('end-label').textContent = 'contrarreloj completado';
+  $('end-big').textContent = fmtTime(total);
+  $('end-big').classList.add('accent');
+  let rows = '';
+  G.times.forEach((t, i) => { rows += '<tr><td>ronda ' + (i + 1) + '</td><td>' + fmtTime(t) + '</td></tr>'; });
+  rows += '<tr class="total"><td>total</td><td>' + fmtTime(total) + '</td></tr>';
+  if (!isRecord && best > 0) rows += '<tr><td>récord</td><td>' + fmtTime(best) + '</td></tr>';
+  $('end-detail').innerHTML = '<table class="times-table">' + rows + '</table>';
+  $('record-tag').style.display = isRecord ? 'block' : 'none';
+  $('btn-rematch').textContent = 'Otra vez';
+  show('screen-end');
+}
+
+/* =====================================================================
+   NÚCLEO DE VOLTEO
+   ===================================================================== */
+function onFlip(i) {
+  if (G.lock || G.matched[i] || G.flip.includes(i)) return;
+  if (G.mode === 'online') { Online.tryFlip(i); return; }
+  if (G.mode === 'solo' && !G.running && $('round-splash').classList.contains('visible')) return;
+  if (G.mode === 'solo' && !G.running) startClock();
+
+  Snd.flip();
+  setFlipped(i, true);
+  G.flip.push(i);
+  if (G.flip.length < 2) return;
+
+  G.lock = true;
+  const [a, b] = G.flip;
+  setTimeout(() => {
+    if (G.deck[a] === G.deck[b]) {
+      G.matched[a] = G.matched[b] = true;
+      setMatched(a); setMatched(b);
+      Snd.match();
+      if (G.mode === 'local') { G.scores[G.turn]++; updateChips(); }
+      G.flip = []; G.lock = false;
+      if (G.matched.every(Boolean)) {
+        if (G.mode === 'solo') soloRoundEnd(); else localEnd();
+      }
+    } else {
+      cardEl(a).classList.add('shake'); cardEl(b).classList.add('shake');
+      Snd.fail();
+      setTimeout(() => {
+        setFlipped(a, false); setFlipped(b, false);
+        cardEl(a).classList.remove('shake'); cardEl(b).classList.remove('shake');
+        if (G.mode === 'local') { G.turn = 1 - G.turn; updateChips(); }
+        G.flip = []; G.lock = false;
+      }, 520);
+    }
+  }, 620);
+}
+
+/* =====================================================================
+   DOS JUGADORES (local)
+   ===================================================================== */
+let localPairs = 10;
+$('local-size').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  localPairs = parseInt(b.dataset.p, 10);
+  $('local-size').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+});
+function gridFor(pairs) {
+  return { 8: [4, 4], 10: [4, 5], 12: [4, 6], 20: [5, 8] }[pairs] || [4, 5];
+}
+$('btn-local-start').addEventListener('click', () => {
+  G.mode = 'local';
+  G.names = [($('p1-name').value.trim() || 'Jugador 1'), ($('p2-name').value.trim() || 'Jugador 2')];
+  G.scores = [0, 0]; G.turn = 0;
+  const [c, r] = gridFor(localPairs);
+  G.cols = c; G.rows = r; G.pairs = localPairs;
+  G.deck = buildDeck(G.pairs);
+  G.matched = new Array(G.deck.length).fill(false);
+  G.flip = []; G.lock = false;
+  renderBoard(); renderHud();
+  show('screen-game');
+});
+function localEnd() {
+  Snd.win();
+  const [s0, s1] = G.scores;
+  $('end-label').textContent = 'partida terminada';
+  $('end-big').classList.remove('accent');
+  if (s0 === s1) {
+    $('end-big').textContent = 'Empate';
+  } else {
+    $('end-big').textContent = G.names[s0 > s1 ? 0 : 1];
+    $('end-big').classList.add('accent');
+  }
+  $('end-detail').innerHTML =
+    '<table class="times-table">' +
+    '<tr><td>' + escapeHtml(G.names[0]) + '</td><td>' + s0 + '</td></tr>' +
+    '<tr><td>' + escapeHtml(G.names[1]) + '</td><td>' + s1 + '</td></tr>' +
+    '</table>';
+  $('record-tag').style.display = 'none';
+  $('btn-rematch').textContent = 'Revancha';
+  show('screen-end');
+}
+
+/* =====================================================================
+   ONLINE (Firebase RTDB · host-autoritativo por turnos)
+   Sala: /g/duo/rooms/{CODE}
+   ===================================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyAFp8M5dKmrUYxnfNdWXqHtewxEtpQJTMY",
+  authDomain: "subasta-de-tiempo.firebaseapp.com",
+  databaseURL: "https://subasta-de-tiempo-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "subasta-de-tiempo",
+  storageBucket: "subasta-de-tiempo.firebasestorage.app",
+  messagingSenderId: "265857604531",
+  appId: "1:265857604531:web:a087d5dbac48fb206f09c6"
+};
+
+const Online = {
+  db: null, ref: null, code: null, role: null, // 'h' | 'g'
+  pairs: 10, listening: false, lastState: null, resolveTimer: null,
+  ended: false,
+
+  init() {
+    if (this.db) return true;
+    if (typeof firebase === 'undefined') return false;
+    try { firebase.initializeApp(firebaseConfig); } catch (e) {}
+    try { this.db = firebase.database(); } catch (e) { return false; }
+    return true;
+  },
+  genCode() {
+    const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    let c = ''; for (let i = 0; i < 4; i++) c += A[(Math.random() * A.length) | 0];
+    return c;
+  },
+  myName() { return $('online-name').value.trim() || (this.role === 'h' ? 'Anfitrión' : 'Invitado'); },
+
+  create() {
+    if (!this.init()) { toast('Sin conexión con el servidor'); return; }
+    this.role = 'h'; this.code = this.genCode(); this.ended = false;
+    this.ref = this.db.ref('g/duo/rooms/' + this.code);
+    const [c, r] = gridFor(this.pairs);
+    const room = {
+      v: 1, createdAt: firebase.database.ServerValue.TIMESTAMP,
+      pairs: this.pairs, cols: c, rows: r,
+      deck: buildDeck(this.pairs),
+      state: 'waiting', turn: 'h',
+      scores: { h: 0, g: 0 },
+      matched: {}, flips: null,
+      players: { h: { name: this.myName() } },
+      rematch: {}
+    };
+    this.ref.set(room).then(() => {
+      this.ref.child('players/h/on').set(true);
+      this.ref.child('players/h/on').onDisconnect().remove();
+      // si el host se va antes de empezar, borrar la sala
+      this.ref.onDisconnect().remove();
+      this.listen();
+      $('room-code-big').textContent = this.code;
+      $('online-status').textContent = 'esperando rival…';
+      show('screen-wait');
+    }).catch(() => toast('No se pudo crear la sala'));
+  },
+
+  join() {
+    if (!this.init()) { toast('Sin conexión con el servidor'); return; }
+    const code = $('join-code').value.trim().toUpperCase();
+    if (code.length !== 4) { toast('Código de 4 letras'); return; }
+    this.role = 'g'; this.code = code; this.ended = false;
+    this.ref = this.db.ref('g/duo/rooms/' + code);
+    this.ref.get().then(snap => {
+      const room = snap.val();
+      if (!room) { toast('Sala no encontrada'); return; }
+      if (room.players && room.players.g && room.players.g.on) { toast('Sala llena'); return; }
+      const upd = {};
+      upd['players/g'] = { name: this.myName(), on: true };
+      upd['state'] = 'playing';
+      this.ref.update(upd).then(() => {
+        this.ref.child('players/g/on').onDisconnect().remove();
+        this.listen();
+      });
+    }).catch(() => toast('No se pudo entrar'));
+  },
+
+  listen() {
+    if (this.listening) return;
+    this.listening = true;
+    this.ref.on('value', snap => this.onRoom(snap.val()));
+  },
+
+  onRoom(room) {
+    if (!room) {
+      if (!this.ended && (G.mode === 'online' || $('screen-wait').classList.contains('visible'))) {
+        toast('La sala se ha cerrado');
+        this.cleanup(); toMenu();
+      }
+      return;
+    }
+    this.lastState = room;
+
+    if (room.state === 'waiting') return;
+
+    // arranque / sincronización de partida
+    if (G.mode !== 'online' || G.deck.length !== room.deck.length) {
+      // el host ya no debe borrar la sala al desconectarse: la partida ha empezado
+      if (this.role === 'h') this.ref.onDisconnect().cancel();
+      G.mode = 'online';
+      G.deck = room.deck.slice();
+      G.cols = room.cols; G.rows = room.rows; G.pairs = room.pairs;
+      G.names = [
+        (room.players && room.players.h && room.players.h.name) || 'Anfitrión',
+        (room.players && room.players.g && room.players.g.name) || 'Invitado'
+      ];
+      renderBoard();
+      show('screen-game');
+      toast(this.myTurn(room) ? 'Empiezas tú' : 'Empieza el rival');
+    }
+
+    // estado derivado
+    G.scores = [ (room.scores && room.scores.h) || 0, (room.scores && room.scores.g) || 0 ];
+    G.turn = room.turn === 'h' ? 0 : 1;
+    const matched = room.matched || {};
+    G.matched = G.deck.map((_, i) => !!matched[i]);
+    const flips = room.flips || [];
+    G.flip = flips.slice();
+    G.lock = flips.length >= 2;
+
+    // pintar
+    renderHud();
+    for (let i = 0; i < G.deck.length; i++) {
+      const el = cardEl(i); if (!el) continue;
+      if (G.matched[i]) {
+        if (!el.classList.contains('matched')) setMatched(i);
+      } else {
+        el.classList.remove('matched');
+        setFlipped(i, flips.includes(i));
+      }
+    }
+
+    // presencia del rival
+    const opp = this.role === 'h' ? 'g' : 'h';
+    if (room.state === 'playing' && room.players && room.players[opp] && !room.players[opp].on) {
+      $('online-status').textContent = '';
+      toast('El rival se ha desconectado');
+    }
+
+    // resolución: la ejecuta quien tiene el turno
+    if (room.state === 'playing' && flips.length === 2 && this.isMyRole(room.turn)) {
+      this.scheduleResolve(room);
+    }
+
+    if (room.state === 'end') this.onEnd(room);
+
+    // revancha
+    if (room.state === 'end' && room.rematch && room.rematch.h && room.rematch.g && this.role === 'h') {
+      this.hostRematch(room);
+    }
+  },
+
+  isMyRole(r) { return r === this.role; },
+  myTurn(room) { return (room || this.lastState || {}).turn === this.role; },
+
+  tryFlip(i) {
+    const room = this.lastState;
+    if (!room || room.state !== 'playing') return;
+    if (!this.myTurn(room)) { toast('Turno del rival'); return; }
+    const flips = room.flips || [];
+    if (flips.length >= 2 || flips.includes(i)) return;
+    if (room.matched && room.matched[i]) return;
+    Snd.flip();
+    this.ref.child('flips').set(flips.concat([i]));
+  },
+
+  scheduleResolve(room) {
+    if (this.resolveTimer) return;
+    this.resolveTimer = setTimeout(() => {
+      this.resolveTimer = null;
+      const cur = this.lastState;
+      if (!cur || !cur.flips || cur.flips.length !== 2) return;
+      const [a, b] = cur.flips;
+      const upd = { flips: null };
+      if (G.deck[a] === G.deck[b]) {
+        upd['matched/' + a] = true;
+        upd['matched/' + b] = true;
+        upd['scores/' + this.role] = ((cur.scores && cur.scores[this.role]) || 0) + 1;
+        Snd.match();
+        const total = Object.keys(cur.matched || {}).length + 2;
+        if (total === G.deck.length) upd['state'] = 'end';
+      } else {
+        upd['turn'] = this.role === 'h' ? 'g' : 'h';
+        Snd.fail();
+      }
+      this.ref.update(upd);
+    }, 900);
+  },
+
+  onEnd(room) {
+    if (this.ended) return;
+    this.ended = true;
+    Snd.win();
+    const sH = (room.scores && room.scores.h) || 0;
+    const sG = (room.scores && room.scores.g) || 0;
+    const me = this.role === 'h' ? sH : sG, opp = this.role === 'h' ? sG : sH;
+    $('end-label').textContent = 'partida online';
+    $('end-big').classList.remove('accent');
+    if (sH === sG) $('end-big').textContent = 'Empate';
+    else {
+      $('end-big').textContent = me > opp ? '¡Has ganado!' : 'Has perdido';
+      if (me > opp) $('end-big').classList.add('accent');
+    }
+    $('end-detail').innerHTML =
+      '<table class="times-table">' +
+      '<tr><td>' + escapeHtml(G.names[0]) + '</td><td>' + sH + '</td></tr>' +
+      '<tr><td>' + escapeHtml(G.names[1]) + '</td><td>' + sG + '</td></tr>' +
+      '</table>';
+    $('record-tag').style.display = 'none';
+    $('btn-rematch').textContent = 'Revancha';
+    show('screen-end');
+  },
+
+  askRematch() {
+    if (!this.ref) return;
+    this.ref.child('rematch/' + this.role).set(true);
+    $('end-label').textContent = 'esperando al rival…';
+  },
+
+  hostRematch(room) {
+    const upd = {
+      deck: buildDeck(room.pairs),
+      matched: null, flips: null, rematch: null,
+      scores: { h: 0, g: 0 },
+      turn: Math.random() < 0.5 ? 'h' : 'g',
+      state: 'playing'
+    };
+    this.ended = false;
+    // forzar resincronización completa en ambos clientes
+    G.mode = null; G.deck = [];
+    this.ref.update(upd);
+  },
+
+  leave() {
+    if (this.ref) {
+      const room = this.lastState;
+      try {
+        if (room && room.state === 'waiting' && this.role === 'h') this.ref.remove();
+        else this.ref.child('players/' + this.role + '/on').remove();
+      } catch (e) {}
+    }
+    this.cleanup();
+  },
+  cleanup() {
+    if (this.ref) { try { this.ref.off(); this.ref.onDisconnect().cancel(); } catch (e) {} }
+    if (this.resolveTimer) { clearTimeout(this.resolveTimer); this.resolveTimer = null; }
+    this.ref = null; this.code = null; this.listening = false;
+    this.lastState = null; this.ended = false;
+  }
+};
+
+$('online-size').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  Online.pairs = parseInt(b.dataset.p, 10);
+  $('online-size').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+});
+$('btn-create').addEventListener('click', () => Online.create());
+$('btn-join').addEventListener('click', () => Online.join());
+$('btn-share').addEventListener('click', () => {
+  const url = location.origin + location.pathname;
+  const msg = '¡Únete a mi sala de Duo! Código: ' + Online.code + '\n' + url;
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+});
+
+/* ---------- navegación ---------- */
+function toMenu() {
+  stopClock();
+  G.mode = null; G.deck = [];
+  $('round-splash').classList.remove('visible');
+  show('screen-menu');
+}
+$('btn-solo').addEventListener('click', () => soloStart());
+$('btn-local').addEventListener('click', () => show('screen-local'));
+$('btn-online').addEventListener('click', () => show('screen-online'));
+$('btn-local-back').addEventListener('click', toMenu);
+$('btn-online-back').addEventListener('click', toMenu);
+$('btn-wait-back').addEventListener('click', () => { Online.leave(); toMenu(); });
+$('exit-btn').addEventListener('click', () => {
+  if (G.mode === 'online') Online.leave();
+  toMenu();
+});
+$('btn-end-menu').addEventListener('click', () => {
+  if (G.mode === 'online') Online.leave();
+  toMenu();
+});
+$('btn-rematch').addEventListener('click', () => {
+  if (G.mode === 'solo') { soloStart(); return; }
+  if (G.mode === 'local') { $('btn-local-start').click(); return; }
+  Online.askRematch();
+});
+$('help-btn').addEventListener('click', () => $('tutorial-overlay').classList.add('visible'));
+$('tut-close').addEventListener('click', () => $('tutorial-overlay').classList.remove('visible'));
+
+/* ---------- precarga de imágenes ---------- */
+CARDS.forEach(n => { const im = new Image(); im.src = n + '.webp'; });
+
+/* ---------- arranque ---------- */
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const s = $('app-splash');
+    if (s) { s.style.transition = 'opacity 0.6s'; s.style.opacity = '0'; setTimeout(() => { s.style.display = 'none'; }, 650); }
+    show('screen-menu');
+  }, 1600);
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+});
+show('screen-menu');
+</script>
+</body>
+</html>
