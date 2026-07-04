@@ -1,9 +1,9 @@
 /* DUO — service worker v1 */
-const CACHE = 'duo-v6';
+const CACHE = 'duo-v7';
 const CARDS = ['ancla','arbol','ballena','barco','calavera','caliz','campana','corona','cuervo','escarabajo','llave','luna','mano','ojo','polilla','reloj','rosa','serpiente','sol','torre'];
+// la música NO se precachea: el fetch handler la guarda en caché en su primer uso
 const ASSETS = ['./','index.html','manifest.json','icon-192.png','icon-512.png']
-  .concat(CARDS.map(n => n + '.webp'))
-  .concat(['intro.mp3','llaves-1.mp3','llaves-2.mp3','lluvia-1.mp3','lluvia-2.mp3','violines.mp3']);
+  .concat(CARDS.map(n => n + '.webp'));
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));

@@ -278,6 +278,18 @@ body.light #theme-toggle .knob::after { content: '☀'; color: #f4efe3; }
 .pchip.turn { border-color: var(--accent); color: var(--text); box-shadow: 0 0 14px var(--glow); }
 .pchip.turn .p-score { color: var(--accent); }
 .pchip.off { opacity: 0.35; text-decoration: line-through; }
+.race-chips {
+  width: 100%; display: flex; gap: 0.4rem; justify-content: center;
+  flex-wrap: wrap; margin-top: 0.15rem;
+}
+.race-chips .rc {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; letter-spacing: 0.08em;
+  border: 1px solid var(--line); border-radius: 7px; padding: 0.24rem 0.5rem;
+  color: var(--muted); background: var(--panel);
+}
+.race-chips .rc.me { border-color: var(--accent); color: var(--text); }
+.race-chips .rc.done { color: var(--accent); }
+.race-chips .rc.off { opacity: 0.35; text-decoration: line-through; }
 
 /* ---- tablero ---- */
 #board-wrap {
@@ -545,8 +557,9 @@ body.light .card { box-shadow: 0 3px 6px rgba(80,66,40,0.30), 0 1px 2px rgba(80,
   <div class="tagline">memoria &amp; parejas</div>
   <button class="btn primary" id="btn-solo">Contrarreloj</button>
   <button class="btn" id="btn-online">Online</button>
+  <button class="btn" id="btn-stats">Estadísticas</button>
   <button class="btn" id="btn-install" style="display:none;">⤓ Instalar la app</button>
-  <div class="ver">DUO · V6</div>
+  <div class="ver">DUO · V7</div>
 </div>
 
 <!-- CONFIG ONLINE -->
@@ -626,6 +639,14 @@ body.light .card { box-shadow: 0 3px 6px rgba(80,66,40,0.30), 0 1px 2px rgba(80,
   <button class="btn primary" id="tut-close">Entendido</button>
 </div>
 
+<!-- ESTADÍSTICAS -->
+<div id="stats-overlay" class="overlay">
+  <h2>Estadísticas</h2>
+  <div class="tut-sub">tu historial en este móvil</div>
+  <div id="stats-body"></div>
+  <button class="btn primary" id="stats-close">Cerrar</button>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -655,6 +676,7 @@ applyTheme((function(){ try { return localStorage.getItem('duo_theme') === 'ligh
 /* ---------- sonido ---------- */
 const Snd = {
   ctx: null, muted: false,
+  buzz(p) { if (this.muted) return; try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} },
   init() {
     if (!this.ctx) {
       try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
@@ -671,13 +693,13 @@ const Snd = {
     o.connect(g); g.connect(this.ctx.destination);
     o.start(this.ctx.currentTime + t0); o.stop(this.ctx.currentTime + t0 + dur + 0.05);
   },
-  flip()  { this.tone(660, 0, 0.07, 'triangle', 0.07); },
-  match() { this.tone(520, 0, 0.12, 'sine', 0.1); this.tone(780, 0.09, 0.16, 'sine', 0.1); },
-  fail()  { this.tone(190, 0, 0.18, 'sawtooth', 0.05); },
-  tick()  { this.tone(540, 0, 0.09, 'square', 0.05); },
-  go()    { this.tone(760, 0, 0.16, 'sine', 0.11); this.tone(1140, 0.05, 0.2, 'sine', 0.08); },
-  round() { this.tone(520, 0, 0.1, 'sine', 0.1); this.tone(660, 0.1, 0.1, 'sine', 0.1); this.tone(880, 0.2, 0.2, 'sine', 0.1); },
-  win()   { [523, 659, 784, 1047].forEach((f, i) => this.tone(f, i * 0.13, 0.22, 'sine', 0.11)); }
+  flip()  { this.tone(660, 0, 0.07, 'triangle', 0.07); this.buzz(12); },
+  match() { this.tone(520, 0, 0.12, 'sine', 0.1); this.tone(780, 0.09, 0.16, 'sine', 0.1); this.buzz([18, 40, 26]); },
+  fail()  { this.tone(190, 0, 0.18, 'sawtooth', 0.05); this.buzz(60); },
+  tick()  { this.tone(540, 0, 0.09, 'square', 0.05); this.buzz(8); },
+  go()    { this.tone(760, 0, 0.16, 'sine', 0.11); this.tone(1140, 0.05, 0.2, 'sine', 0.08); this.buzz(20); },
+  round() { this.tone(520, 0, 0.1, 'sine', 0.1); this.tone(660, 0.1, 0.1, 'sine', 0.1); this.tone(880, 0.2, 0.2, 'sine', 0.1); this.buzz([20, 40, 20]); },
+  win()   { [523, 659, 784, 1047].forEach((f, i) => this.tone(f, i * 0.13, 0.22, 'sine', 0.11)); this.buzz([30, 60, 30, 60, 90]); }
 };
 (function(){
   try { Snd.muted = localStorage.getItem('duo_muted') === '1'; } catch(e){}
@@ -798,6 +820,32 @@ function cancelCountdown() {
   $('countdown').classList.remove('visible');
 }
 
+/* ---------- estadísticas locales ---------- */
+const Stats = {
+  d: { g: 0, w: 0, f: 0, m: 0 },
+  load() { try { Object.assign(this.d, JSON.parse(localStorage.getItem('duo_stats') || '{}')); } catch (e) {} },
+  save() { try { localStorage.setItem('duo_stats', JSON.stringify(this.d)); } catch (e) {} },
+  flip() { this.d.f++; },
+  match() { this.d.m++; },
+  game() { this.d.g++; this.save(); },
+  winOnline() { this.d.w++; this.save(); }
+};
+Stats.load();
+function openStats() {
+  let best = null;
+  try { best = parseFloat(localStorage.getItem('duo_best') || ''); } catch (e) {}
+  const acc = Stats.d.f > 0 ? Math.round(200 * Stats.d.m / Stats.d.f) : 0;
+  $('stats-body').innerHTML =
+    '<table class="times-table">' +
+    '<tr><td>partidas</td><td>' + Stats.d.g + '</td></tr>' +
+    '<tr><td>victorias online</td><td>' + Stats.d.w + '</td></tr>' +
+    '<tr><td>mejor contrarreloj</td><td>' + (best > 0 ? fmtTime(best) : '—') + '</td></tr>' +
+    '<tr><td>precisión</td><td>' + acc + '%</td></tr>' +
+    '<tr><td>cartas levantadas</td><td>' + Stats.d.f + '</td></tr>' +
+    '</table>';
+  $('stats-overlay').classList.add('visible');
+}
+
 /* ---------- estado ---------- */
 const G = {
   mode: null,          // 'solo' | 'online'
@@ -806,6 +854,24 @@ const G = {
   pending: null, pendingTimer: null,
   round: 0, times: [], t0: 0, running: false, raf: 0
 };
+
+/* ---------- récords por ronda (contrarreloj) ---------- */
+const Splits = {
+  arr: [null, null, null, null, null],
+  load() {
+    try {
+      const a = JSON.parse(localStorage.getItem('duo_splits') || '[]');
+      for (let i = 0; i < 5; i++) if (a[i] > 0) this.arr[i] = a[i];
+    } catch (e) {}
+  },
+  save() { try { localStorage.setItem('duo_splits', JSON.stringify(this.arr)); } catch (e) {} },
+  best(r) { return this.arr[r]; },
+  submit(r, t) {
+    if (this.arr[r] == null || t < this.arr[r]) { this.arr[r] = t; this.save(); return true; }
+    return false;
+  }
+};
+Splits.load();
 
 /* ---------- tablero ---------- */
 function renderBoard() {
@@ -868,10 +934,14 @@ function setMatched(i) { const c = cardEl(i); c.classList.remove('flipped'); c.c
 function renderHud() {
   const h = $('hud');
   if (G.mode === 'solo' || (G.mode === 'online' && Online.gameMode === 'velocidad')) {
+    const best = Splits.best(G.round);
     h.innerHTML =
       '<div class="hud-block"><div class="hud-label">ronda</div><div class="hud-value">' + (G.round + 1) + '/5</div></div>' +
       '<div class="hud-block"><div class="hud-label">tiempo</div><div class="hud-value accent" id="clock">0.0</div></div>' +
-      '<div class="hud-block"><div class="hud-label">total</div><div class="hud-value" id="total-clock">' + fmtTime(sumTimes()) + '</div></div>';
+      '<div class="hud-block"><div class="hud-label">total</div><div class="hud-value" id="total-clock">' + fmtTime(sumTimes()) + '</div></div>' +
+      (G.mode === 'solo'
+        ? '<div class="hud-block"><div class="hud-label">mejor</div><div class="hud-value" style="color:var(--muted)">' + (best != null ? fmtTime(best) : '—') + '</div></div>'
+        : '<div class="race-chips" id="race-chips"></div>');
   } else {
     h.innerHTML = Online.order.map(r => Online.chipHtml(r)).join('');
     Online.updateChips();
@@ -899,6 +969,7 @@ function stopClock() {
    ===================================================================== */
 function soloStart() {
   G.mode = 'solo'; G.round = 0; G.times = [];
+  G.improvedRounds = []; G.lastDelta = null; G.lastImproved = false;
   soloPrepRound();
 }
 function setupRound(cols, rows, deck) {
@@ -916,7 +987,15 @@ function soloPrepRound() {
   $('rs-label').textContent = 'ronda';
   $('rs-num').textContent = G.round + 1;
   $('rs-info').textContent = G.pairs + ' parejas · ' + c + '×' + r;
-  $('rs-time').innerHTML = G.round === 0 ? '' : 'acumulado: <b>' + fmtTime(sumTimes()) + '</b>';
+  let extra = '';
+  if (G.round > 0 && G.lastDelta != null) {
+    const d = G.lastDelta;
+    extra = ' · ronda anterior <b>' + (d <= 0 ? '−' : '+') + fmtTime(Math.abs(d)) + '</b>' +
+            (G.lastImproved ? ' ★' : '');
+  } else if (G.round > 0 && G.lastImproved) {
+    extra = ' · ★ primera marca';
+  }
+  $('rs-time').innerHTML = G.round === 0 ? '' : 'acumulado: <b>' + fmtTime(sumTimes()) + '</b>' + extra;
   $('rs-table').innerHTML = '';
   $('rs-go').style.display = '';
   $('round-splash').classList.add('visible');
@@ -928,6 +1007,12 @@ $('rs-go').addEventListener('click', () => {
 function soloRoundEnd() {
   const t = stopClock();
   G.times.push(t);
+  const prevBest = Splits.best(G.round);
+  const improved = Splits.submit(G.round, t);
+  G.lastDelta = prevBest != null ? t - prevBest : null;
+  G.lastImproved = improved;
+  if (!G.improvedRounds) G.improvedRounds = [];
+  G.improvedRounds[G.round] = improved && prevBest != null;
   const clockEl = $('clock'); if (clockEl) clockEl.textContent = fmtTime(t);
   const totalEl = $('total-clock'); if (totalEl) totalEl.textContent = fmtTime(sumTimes());
   if (G.round < ROUNDS.length - 1) {
@@ -948,8 +1033,12 @@ function soloEnd() {
   $('end-label').textContent = 'contrarreloj completado';
   $('end-big').textContent = fmtTime(total);
   $('end-big').classList.add('accent');
+  Stats.game();
   let rows = '';
-  G.times.forEach((t, i) => { rows += '<tr><td>ronda ' + (i + 1) + '</td><td>' + fmtTime(t) + '</td></tr>'; });
+  G.times.forEach((t, i) => {
+    const star = (G.improvedRounds && G.improvedRounds[i]) ? ' ★' : '';
+    rows += '<tr><td>ronda ' + (i + 1) + '</td><td>' + fmtTime(t) + star + '</td></tr>';
+  });
   rows += '<tr class="total"><td>total</td><td>' + fmtTime(total) + '</td></tr>';
   if (!isRecord && best > 0) rows += '<tr><td>récord</td><td>' + fmtTime(best) + '</td></tr>';
   $('end-detail').innerHTML = '<table class="times-table">' + rows + '</table>';
@@ -984,6 +1073,7 @@ function onFlip(i) {
   if (G.lock || G.flip.includes(i)) return;
 
   Snd.flip();
+  Stats.flip();
   setFlipped(i, true);
   G.flip.push(i);
   if (G.flip.length < 2) return;
@@ -996,6 +1086,8 @@ function onFlip(i) {
       G.matched[a] = G.matched[b] = true;
       setMatched(a); setMatched(b);
       Snd.match();
+      Stats.match();
+      if (G.mode === 'online') Online.reportProgress(G.matched.filter(Boolean).length / 2);
       if (G.matched.every(Boolean)) {
         if (G.mode === 'solo') soloRoundEnd(); else Online.raceRoundEnd();
       }
@@ -1084,7 +1176,6 @@ const Online = {
     }
     this.ref.set(room).then(() => {
       this.ref.child('players/p0/on').onDisconnect().remove();
-      this.ref.onDisconnect().remove(); // se cancela al empezar
       this.listen();
       $('room-code-big').textContent = this.code;
       show('screen-wait');
@@ -1099,28 +1190,37 @@ const Online = {
     this.code = code;
     this.ref = this.db.ref('g/duo/rooms/' + code);
     const name = this.myName();
-    this.ref.child('players').transaction(players => {
-      if (players === null) return; // sala inexistente: abortar
-      for (let k = 1; k < ROLES.length; k++) {
-        const r = ROLES[k];
-        if (!players[r] || !players[r].on) {
-          players[r] = { name: name, on: true };
-          players[r]._claim = r; // marca temporal para identificar el slot ganado
-          return players;
+    const cid = 'c' + Math.random().toString(36).slice(2, 9);
+    this.ref.transaction(room => {
+      if (room === null) return; // sala inexistente: abortar
+      const players = room.players || {};
+      // 1) recuperar mi hueco por nombre (reconexión tras cierre/recarga)
+      for (const r of ROLES) {
+        if (players[r] && players[r].name === name && !players[r].on) {
+          players[r].on = true; players[r]._claim = cid;
+          room.players = players; return room;
         }
       }
-      return; // llena: abortar
+      // 2) hueco nuevo solo si la sala aún no ha empezado
+      if (room.state === 'waiting') {
+        for (let k = 1; k < ROLES.length; k++) {
+          const r = ROLES[k];
+          if (!players[r]) {
+            players[r] = { name: name, on: true, _claim: cid };
+            room.players = players; return room;
+          }
+        }
+      }
+      return; // llena o en juego sin hueco propio: abortar
     }).then(res => {
       if (!res.committed) {
         this.ref.get().then(s => toast(s.exists() ? 'Sala llena o en juego' : 'Sala no encontrada'));
         this.ref = null;
         return;
       }
-      const players = res.snapshot.val() || {};
+      const players = (res.snapshot.val() || {}).players || {};
       let mine = null;
-      for (const r of ROLES) {
-        if (players[r] && players[r]._claim === r && players[r].name === name) mine = r;
-      }
+      for (const r of ROLES) { if (players[r] && players[r]._claim === cid) mine = r; }
       if (!mine) { toast('No se pudo entrar'); this.ref = null; return; }
       this.role = mine;
       this.ref.child('players/' + mine + '/_claim').remove();
@@ -1136,7 +1236,6 @@ const Online = {
     if (!room || this.role !== 'p0') return;
     const order = ROLES.filter(r => this.isOn(room, r));
     if (order.length < 2) { toast('Faltan jugadores'); return; }
-    this.ref.onDisconnect().cancel();
     const upd = { state: 'playing', order: order };
     if (room.mode === 'turnos') upd.turn = order[0];
     this.ref.update(upd);
@@ -1146,6 +1245,16 @@ const Online = {
     if (this.listening) return;
     this.listening = true;
     this.ref.on('value', snap => this.onRoom(snap.val()));
+    // al recuperar la conexión (minimizar, blip de red), re-marcar presencia
+    this.connRef = this.db.ref('.info/connected');
+    this.connFn = snap => {
+      if (snap.val() === true && this.ref && this.role && !this.ended) {
+        const p = this.ref.child('players/' + this.role + '/on');
+        p.set(true);
+        p.onDisconnect().remove();
+      }
+    };
+    this.connRef.on('value', this.connFn);
   },
 
   onRoom(room) {
@@ -1282,6 +1391,7 @@ const Online = {
     if (flips.length >= 2 || flips.includes(i)) return;
     if (room.matched && room.matched[i]) return;
     Snd.flip();
+    Stats.flip();
     this.ref.child('flips').set(flips.concat([i]));
   },
   scheduleResolve(room) {
@@ -1297,6 +1407,7 @@ const Online = {
         upd['matched/' + b] = true;
         upd['scores/' + this.role] = ((cur.scores && cur.scores[this.role]) || 0) + 1;
         Snd.match();
+        Stats.match();
         const total = Object.keys(cur.matched || {}).length + 2;
         if (total === G.deck.length) upd.state = 'end';
       } else {
@@ -1322,8 +1433,9 @@ const Online = {
       $('end-big').textContent = 'Empate';
     } else {
       $('end-big').textContent = this.nameOf(room, winners[0].r);
-      if (winners[0].r === this.role) $('end-big').classList.add('accent');
+      if (winners[0].r === this.role) { $('end-big').classList.add('accent'); Stats.winOnline(); }
     }
+    Stats.game();
     $('end-detail').innerHTML = this.rankTable(scores.map(x => ({
       label: this.nameOf(room, x.r), value: String(x.s), me: x.r === this.role
     })));
@@ -1351,11 +1463,27 @@ const Online = {
       countdown(() => { G.starting = false; startClock(); });
       return;
     }
+    this.renderRaceChips(room);
     // si estoy en espera entre rondas, refrescar la tabla en vivo
     if (this.roundDone) this.renderRaceWait(room);
 
     // el host avanza cuando todos los activos han terminado la ronda
     if (this.role === 'p0') this.hostAdvance(room);
+  },
+  reportProgress(n) {
+    if (this.ref && this.gameMode === 'velocidad' && this.role) {
+      this.ref.child('progress/' + this.role).set(n);
+    }
+  },
+  renderRaceChips(room) {
+    const el = $('race-chips'); if (!el) return;
+    el.innerHTML = this.order.map(r => {
+      const done = room.times && room.times[r] && room.times[r][this.curRound] != null;
+      const off = !this.isOn(room, r);
+      const p = (room.progress && room.progress[r]) || 0;
+      return '<span class="rc' + (r === this.role ? ' me' : '') + (done ? ' done' : '') + (off ? ' off' : '') + '">' +
+        escapeHtml(this.nameOf(room, r)) + ' ' + (done ? '✓' : p + '/' + G.pairs) + '</span>';
+    }).join('');
   },
   myTimes(room) {
     const t = (room.times && room.times[this.role]) || {};
@@ -1405,7 +1533,7 @@ const Online = {
       this._advancing = false;
       const cur = this.lastState;
       if (!cur || (cur.round || 0) !== round || cur.state !== 'playing') return;
-      if (round < 4) this.ref.update({ round: round + 1 });
+      if (round < 4) this.ref.update({ round: round + 1, progress: null });
       else this.ref.update({ state: 'end' });
     }, 2400);
   },
@@ -1431,7 +1559,8 @@ const Online = {
     $('end-big').classList.remove('accent');
     const w = rank[0];
     $('end-big').textContent = this.nameOf(room, w.r);
-    if (w.r === this.role) $('end-big').classList.add('accent');
+    if (w.r === this.role) { $('end-big').classList.add('accent'); Stats.winOnline(); }
+    Stats.game();
     const medals = ['①', '②', '③', '④'];
     $('end-detail').innerHTML = this.rankTable(rank.map((x, i) => ({
       medal: medals[i] || '',
@@ -1471,7 +1600,7 @@ const Online = {
     if (!all) return;
     const upd = {
       gid: Date.now(), state: 'playing', order: active,
-      matched: null, flips: null, rematch: null, scores: {}, times: {}
+      matched: null, flips: null, rematch: null, scores: {}, times: {}, progress: null
     };
     if (room.mode === 'turnos') {
       upd.deck = buildDeck(room.pairs);
@@ -1499,6 +1628,7 @@ const Online = {
     this.lastState = null; this._advancing = false;
   },
   cleanup() {
+    if (this.connRef) { try { this.connRef.off('value', this.connFn); } catch (e) {} this.connRef = null; }
     if (this.ref) { try { this.ref.off(); this.ref.onDisconnect().cancel(); } catch (e) {} }
     if (this.resolveTimer) { clearTimeout(this.resolveTimer); this.resolveTimer = null; }
     this.ref = null; this.code = null; this.role = null; this.listening = false;
@@ -1564,6 +1694,8 @@ $('btn-rematch').addEventListener('click', () => {
   if (G.mode === 'solo') { soloStart(); return; }
   Online.askRematch();
 });
+$('btn-stats').addEventListener('click', openStats);
+$('stats-close').addEventListener('click', () => $('stats-overlay').classList.remove('visible'));
 $('help-btn').addEventListener('click', () => $('tutorial-overlay').classList.add('visible'));
 $('tut-close').addEventListener('click', () => $('tutorial-overlay').classList.remove('visible'));
 
