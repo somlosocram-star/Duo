@@ -1,5 +1,5 @@
 /* DUO — service worker v1 */
-const CACHE = 'duo-v2';
+const CACHE = 'duo-v3';
 const CARDS = ['ancla','arbol','ballena','barco','calavera','caliz','campana','corona','cuervo','escarabajo','llave','luna','mano','ojo','polilla','reloj','rosa','serpiente','sol','torre'];
 const ASSETS = ['./','index.html','manifest.json','icon-192.png','icon-512.png']
   .concat(CARDS.map(n => n + '.webp'));

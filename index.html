@@ -47,22 +47,26 @@
   --line: #2b2721;
   --text: #e9e3d5;
   --muted: #6d6459;
-  --accent: #c4483d;
-  --accent-deep: #9e2b22;
+  --accent: #e6dfd0;          /* tinta clara sobre fondo oscuro */
+  --glow: rgba(233, 227, 213, 0.22);
   --card-paper: #f1ead9;
+  --btn-shadow: rgba(0, 0, 0, 0.45);
+  --btn-hi: rgba(255, 255, 255, 0.06);
   --grain-opacity: 0.5;
   --vignette: rgba(0,0,0,0.45);
 }
 body.light, html.pre-light body {
   --bg: #f4f0e6;
-  --panel: #e9e3d4;
-  --panel-2: #efe9dc;
-  --line: #d4ccb8;
-  --text: #2a2218;
+  --panel: #ece6d7;
+  --panel-2: #f4efe3;
+  --line: #cfc7b2;
+  --text: #241c12;
   --muted: #9a8f78;
-  --accent: #9e2b22;
-  --accent-deep: #7d1f18;
+  --accent: #241c12;          /* tinta oscura sobre papel */
+  --glow: rgba(36, 28, 18, 0.20);
   --card-paper: #faf6ec;
+  --btn-shadow: rgba(80, 66, 40, 0.22);
+  --btn-hi: rgba(255, 255, 255, 0.75);
   --grain-opacity: 0.18;
   --vignette: rgba(120,100,60,0.10);
 }
@@ -73,8 +77,8 @@ body {
   color: var(--text);
   font-family: 'Cormorant Garamond', serif;
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(158,43,34,0.08) 0%, transparent 65%),
-    radial-gradient(ellipse 60% 80% at 50% 100%, rgba(158,43,34,0.04) 0%, transparent 65%);
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,255,255,0.03) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 80% at 50% 100%, rgba(0,0,0,0.10) 0%, transparent 65%);
   background-attachment: fixed;
   position: relative;
   overscroll-behavior: none;
@@ -103,15 +107,18 @@ body::after {
 }
 #theme-toggle .knob {
   position: absolute; width: 24px; height: 24px; border-radius: 50%; left: 2px;
-  background: radial-gradient(circle at 35% 30%, #e0705f, #9e2b22 70%, #641711);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.35);
+  background: radial-gradient(circle at 35% 30%, #fdf8ec, #cfc7b2 75%, #948a72);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.5);
   transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
   display: flex; align-items: center; justify-content: center;
   font-size: 0.7rem; line-height: 1;
 }
-#theme-toggle .knob::after { content: '☾'; color: #f4e8dd; }
-body.light #theme-toggle .knob { transform: translateX(26px); }
-body.light #theme-toggle .knob::after { content: '☀'; }
+#theme-toggle .knob::after { content: '☾'; color: #3a3226; }
+body.light #theme-toggle .knob {
+  transform: translateX(26px);
+  background: radial-gradient(circle at 35% 30%, #4a4030, #241c12 75%, #0d0a06);
+}
+body.light #theme-toggle .knob::after { content: '☀'; color: #f4efe3; }
 #sound-toggle, #help-btn {
   position: fixed; top: max(1rem, env(safe-area-inset-top)); z-index: 500;
   width: 38px; height: 30px; border-radius: 8px;
@@ -119,6 +126,7 @@ body.light #theme-toggle .knob::after { content: '☀'; }
   cursor: pointer; outline: none;
   font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem;
   display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 1px 3px var(--btn-shadow), inset 0 1px 0 var(--btn-hi);
 }
 #sound-toggle { right: 5.2rem; }
 #help-btn { right: 8.4rem; font-weight: 700; }
@@ -126,13 +134,27 @@ body.light #theme-toggle .knob::after { content: '☀'; }
 #sound-toggle.muted .ic-on { display: none; }
 #sound-toggle.muted .ic-off { display: inline; }
 
+/* ---- sello (dos naipes dentro de anillo) ---- */
+.seal {
+  width: 72px; height: 72px; border-radius: 50%;
+  border: 1px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 1.4rem; position: relative; flex-shrink: 0;
+  box-shadow: inset 0 0 22px var(--glow), 0 0 26px var(--glow);
+}
+.seal::before, .seal::after { content: ''; position: absolute; border-radius: 50%; border: 1px solid var(--accent); opacity: 0.35; }
+.seal::before { inset: 4px; }
+.seal::after { inset: -9px; border-style: dotted; opacity: 0.5; animation: ringSpin 24s linear infinite; }
+@keyframes ringSpin { to { transform: rotate(360deg); } }
+.seal svg { width: 62%; height: 62%; color: var(--accent); display: block; }
+
 /* ---- splash inicial ---- */
 #app-splash {
   position: fixed; inset: 0; z-index: 900;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   background: var(--bg);
 }
-#app-splash .seal { animation: sealMint 1s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+#app-splash .seal { width: 92px; height: 92px; animation: sealMint 1s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
 #app-splash .splash-title {
   font-size: 3rem; font-style: italic; font-weight: 500; margin-top: 0.4rem;
   animation: glyphDrop 0.8s 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) both;
@@ -152,23 +174,6 @@ body.light #theme-toggle .knob::after { content: '☀'; }
   0% { opacity: 0; transform: translateY(-30px) scale(1.3); }
   70% { opacity: 1; transform: translateY(4px) scale(0.97); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-/* ---- sello ---- */
-.seal {
-  width: 62px; height: 62px; border-radius: 50%;
-  border: 1px solid var(--accent);
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 1.4rem; position: relative; flex-shrink: 0;
-  box-shadow: inset 0 0 20px rgba(158,43,34,0.15), 0 0 30px rgba(158,43,34,0.08);
-}
-.seal::before, .seal::after { content: ''; position: absolute; border-radius: 50%; border: 1px solid rgba(158,43,34,0.30); }
-.seal::before { inset: 4px; }
-.seal::after { inset: -9px; border-style: dotted; opacity: 0.5; animation: ringSpin 24s linear infinite; }
-@keyframes ringSpin { to { transform: rotate(360deg); } }
-.seal .glyph {
-  font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 700;
-  font-size: 1.6rem; color: var(--accent); line-height: 1;
 }
 
 /* ---- pantallas ---- */
@@ -192,14 +197,19 @@ body.light #theme-toggle .knob::after { content: '☀'; }
 .btn {
   font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; font-weight: 500;
   letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--text); background: var(--panel);
-  border: 1px solid var(--line); border-radius: 10px;
+  color: var(--text);
+  background: linear-gradient(180deg, var(--panel-2) 0%, var(--panel) 100%);
+  border: 1px solid var(--line); border-radius: 11px;
   padding: 0.95rem 1.2rem; width: min(300px, 82vw);
-  cursor: pointer; margin-bottom: 0.8rem;
-  transition: border-color 0.25s, background 0.25s, transform 0.1s;
+  cursor: pointer; margin-bottom: 0.85rem;
+  box-shadow: 0 3px 7px var(--btn-shadow), 0 1px 2px var(--btn-shadow), inset 0 1px 0 var(--btn-hi);
+  transition: box-shadow 0.15s, transform 0.1s, border-color 0.25s;
 }
-.btn:active { transform: scale(0.97); }
-.btn.primary { border-color: var(--accent); color: var(--accent); }
+.btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px var(--btn-shadow), inset 0 2px 6px rgba(0,0,0,0.35);
+}
+.btn.primary { border-color: var(--accent); color: var(--accent); font-weight: 700; }
 .btn.small { width: auto; padding: 0.6rem 1.1rem; font-size: 0.7rem; margin: 0 0.3rem; }
 .btn:disabled { opacity: 0.4; pointer-events: none; }
 .field {
@@ -209,20 +219,26 @@ body.light #theme-toggle .knob::after { content: '☀'; }
   padding: 0.85rem 1rem; width: min(300px, 82vw);
   margin-bottom: 0.9rem; text-align: center; outline: none;
   text-transform: uppercase; letter-spacing: 0.2em;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.18);
 }
 .field:focus { border-color: var(--accent); }
 .hint {
   font-size: 1rem; font-style: italic; color: var(--muted);
-  max-width: 320px; margin-bottom: 1.4rem; line-height: 1.35;
+  max-width: 320px; margin-bottom: 0.7rem; line-height: 1.35;
 }
-.seg { display: flex; gap: 0.5rem; margin-bottom: 1.3rem; }
+.seg { display: flex; gap: 0.5rem; margin-bottom: 1.1rem; flex-wrap: wrap; justify-content: center; }
 .seg button {
   font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; letter-spacing: 0.1em;
-  color: var(--muted); background: var(--panel);
+  color: var(--muted);
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
   border: 1px solid var(--line); border-radius: 8px;
   padding: 0.55rem 0.9rem; cursor: pointer;
+  box-shadow: 0 2px 4px var(--btn-shadow), inset 0 1px 0 var(--btn-hi);
 }
-.seg button.on { color: var(--accent); border-color: var(--accent); }
+.seg button.on {
+  color: var(--accent); border-color: var(--accent);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.25);
+}
 .ver {
   position: fixed; bottom: max(0.8rem, env(safe-area-inset-bottom)); left: 0; right: 0;
   font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem;
@@ -233,10 +249,10 @@ body.light #theme-toggle .knob::after { content: '☀'; }
 #screen-game { justify-content: flex-start; padding: 0; }
 #hud {
   width: 100%; flex-shrink: 0;
-  padding: calc(max(0.8rem, env(safe-area-inset-top)) + 2.4rem) 1rem 0.6rem;
-  display: flex; align-items: center; justify-content: center; gap: 1rem;
+  padding: calc(max(0.8rem, env(safe-area-inset-top)) + 2.4rem) 0.8rem 0.5rem;
+  display: flex; align-items: center; justify-content: center; gap: 0.6rem; flex-wrap: wrap;
 }
-#hud .hud-block { text-align: center; min-width: 86px; }
+#hud .hud-block { text-align: center; min-width: 82px; }
 #hud .hud-label {
   font-family: 'IBM Plex Mono', monospace; font-size: 0.55rem;
   letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted);
@@ -246,19 +262,22 @@ body.light #theme-toggle .knob::after { content: '☀'; }
 }
 #hud .hud-value.accent { color: var(--accent); }
 .pchip {
-  font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem;
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem;
   border: 1px solid var(--line); border-radius: 9px;
-  padding: 0.45rem 0.75rem; min-width: 108px;
-  background: var(--panel); color: var(--muted);
+  padding: 0.4rem 0.6rem; min-width: 78px;
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  color: var(--muted);
+  box-shadow: 0 2px 4px var(--btn-shadow), inset 0 1px 0 var(--btn-hi);
   transition: border-color 0.3s, color 0.3s, box-shadow 0.3s;
 }
 .pchip .p-name {
-  display: block; letter-spacing: 0.12em; text-transform: uppercase;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;
+  display: block; letter-spacing: 0.1em; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px;
 }
-.pchip .p-score { display: block; font-size: 1.15rem; font-weight: 700; margin-top: 0.1rem; }
-.pchip.turn { border-color: var(--accent); color: var(--text); box-shadow: 0 0 14px rgba(158,43,34,0.25); }
+.pchip .p-score { display: block; font-size: 1.1rem; font-weight: 700; margin-top: 0.1rem; }
+.pchip.turn { border-color: var(--accent); color: var(--text); box-shadow: 0 0 14px var(--glow); }
 .pchip.turn .p-score { color: var(--accent); }
+.pchip.off { opacity: 0.35; text-decoration: line-through; }
 
 /* ---- tablero ---- */
 #board-wrap {
@@ -269,19 +288,30 @@ body.light #theme-toggle .knob::after { content: '☀'; }
 #board {
   display: grid; gap: clamp(4px, 1.2vw, 9px);
   width: 100%; height: 100%;
-  max-width: min(100%, calc((100dvh - 210px) * var(--ar, 0.625)));
-  max-height: calc(100dvh - 210px);
+  max-width: min(100%, calc((100dvh - 215px) * var(--ar, 0.625)));
+  max-height: calc(100dvh - 215px);
   aspect-ratio: var(--ar, 0.625);
   align-self: center; justify-self: center;
   margin: auto;
 }
-.card { perspective: 700px; cursor: pointer; position: relative; }
+.card { perspective: 720px; cursor: pointer; position: relative; }
+.card.deal { animation: dealIn 0.4s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+@keyframes dealIn {
+  0% { opacity: 0; transform: translateY(14px) scale(0.9); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
 .card .ci {
   position: absolute; inset: 0;
   transform-style: preserve-3d;
-  transition: transform 0.45s cubic-bezier(0.3, 0.8, 0.3, 1);
+  transition: transform 0.55s cubic-bezier(0.34, 1.25, 0.4, 1);
 }
 .card.flipped .ci, .card.matched .ci { transform: rotateY(180deg); }
+.card.lift { z-index: 3; animation: liftUp 0.55s cubic-bezier(0.3, 0.7, 0.4, 1) both; }
+@keyframes liftUp {
+  0%   { transform: scale(1);    filter: drop-shadow(0 0 0 rgba(0,0,0,0)); }
+  45%  { transform: scale(1.12); filter: drop-shadow(0 10px 14px rgba(0,0,0,0.38)); }
+  100% { transform: scale(1);    filter: drop-shadow(0 0 0 rgba(0,0,0,0)); }
+}
 .card .face {
   position: absolute; inset: 0; border-radius: 9%;
   backface-visibility: hidden; -webkit-backface-visibility: hidden;
@@ -290,18 +320,16 @@ body.light #theme-toggle .knob::after { content: '☀'; }
 }
 .card .back {
   background:
-    radial-gradient(circle at 50% 50%, rgba(158,43,34,0.12) 0%, transparent 62%),
-    var(--panel-2);
+    radial-gradient(circle at 50% 42%, var(--glow) 0%, transparent 58%),
+    linear-gradient(180deg, var(--panel-2), var(--panel));
   display: flex; align-items: center; justify-content: center;
+  box-shadow: inset 0 1px 0 var(--btn-hi);
 }
 .card .back::before {
   content: ''; position: absolute; inset: 9%;
-  border: 1px dotted rgba(158,43,34,0.55); border-radius: 50%;
+  border: 1px dotted var(--accent); opacity: 0.5; border-radius: 50%;
 }
-.card .back span {
-  font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 700;
-  color: var(--accent); font-size: clamp(0.9rem, 4.5vw, 1.6rem); opacity: 0.9;
-}
+.card .back svg { width: 46%; height: 46%; color: var(--accent); opacity: 0.9; }
 .card .front {
   transform: rotateY(180deg);
   background: var(--card-paper);
@@ -320,7 +348,7 @@ body.light #theme-toggle .knob::after { content: '☀'; }
 }
 .card.matched::after {
   content: ''; position: absolute; inset: 0; border-radius: 9%;
-  box-shadow: 0 0 16px rgba(158,43,34,0.35);
+  box-shadow: 0 0 16px var(--glow);
   animation: glowFade 1.1s 0.15s ease-out both; pointer-events: none;
 }
 @keyframes glowFade { 0% { opacity: 1; } 100% { opacity: 0; } }
@@ -338,11 +366,32 @@ body.light #theme-toggle .knob::after { content: '☀'; }
   background: none; border: none; cursor: pointer; padding: 0.5rem 1rem;
 }
 
-/* ---- interludio de ronda (contrarreloj) ---- */
+/* ---- cuenta atrás ---- */
+#countdown {
+  position: fixed; inset: 0; z-index: 750;
+  display: none; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter: blur(2px);
+}
+#countdown.visible { display: flex; }
+#countdown .cd-num {
+  font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 500;
+  font-size: clamp(7rem, 38vw, 15rem); color: var(--accent); line-height: 1;
+  text-shadow: 0 0 70px var(--glow);
+}
+#countdown .cd-num.pulse { animation: cdPulse 0.68s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+@keyframes cdPulse {
+  0% { opacity: 0; transform: scale(1.6); }
+  55% { opacity: 1; transform: scale(0.96); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ---- interludio de ronda ---- */
 #round-splash {
   position: fixed; inset: 0; z-index: 80;
   display: none; flex-direction: column; justify-content: center; align-items: center;
   background: color-mix(in srgb, var(--bg) 97%, black);
+  padding: 1.5rem;
 }
 #round-splash.visible { display: flex; }
 #round-splash .rs-label {
@@ -354,7 +403,7 @@ body.light #theme-toggle .knob::after { content: '☀'; }
   font-size: clamp(5rem, 24vw, 11rem); font-weight: 500; color: var(--accent);
   line-height: 1; margin: 0.5rem 0;
   animation: splashIn 0.5s cubic-bezier(0.2, 0.9, 0.3, 1) both;
-  text-shadow: 0 0 60px rgba(158,43,34,0.25);
+  text-shadow: 0 0 60px var(--glow);
 }
 @keyframes splashIn {
   0% { opacity: 0; transform: scale(1.4); letter-spacing: 0.2em; }
@@ -368,6 +417,7 @@ body.light #theme-toggle .knob::after { content: '☀'; }
   margin-bottom: 1.6rem;
 }
 #round-splash .rs-time b { color: var(--accent); }
+#rs-table { margin-bottom: 1.4rem; }
 
 /* ---- overlays genéricos ---- */
 .overlay {
@@ -393,7 +443,7 @@ body.light #theme-toggle .knob::after { content: '☀'; }
 .tut-text { font-size: 1.1rem; line-height: 1.4; }
 .overlay .btn { align-self: center; margin-top: 1rem; }
 
-/* ---- fin de partida ---- */
+/* ---- fin / tablas ---- */
 #screen-end .end-label {
   font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem;
   letter-spacing: 0.45em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem;
@@ -402,26 +452,35 @@ body.light #theme-toggle .knob::after { content: '☀'; }
   font-size: clamp(2.2rem, 8vw, 3.4rem); font-style: italic; font-weight: 500;
   margin-bottom: 0.4rem; line-height: 1.05;
 }
-#screen-end .end-big.accent { color: var(--accent); }
+#screen-end .end-big.accent { color: var(--accent); text-shadow: 0 0 40px var(--glow); }
 .times-table {
   font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem;
   margin: 0.9rem 0 1.4rem; border-collapse: collapse;
 }
-.times-table td { padding: 0.25rem 0.9rem; }
+.times-table td { padding: 0.28rem 0.9rem; }
 .times-table td:first-child { color: var(--muted); font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; }
 .times-table tr.total td { border-top: 1px solid var(--line); font-weight: 700; color: var(--accent); font-size: 1rem; }
+.times-table tr.me td { color: var(--accent); }
+.times-table td.medal { font-size: 0.95rem; padding-right: 0.2rem; }
 .record-tag {
   font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.3em;
   text-transform: uppercase; color: var(--accent); margin-bottom: 1.2rem;
 }
 #online-status {
   font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--muted);
-  margin-bottom: 1rem; min-height: 1.1em; letter-spacing: 0.08em;
+  margin-bottom: 0.8rem; min-height: 1.1em; letter-spacing: 0.08em;
 }
 #room-code-big {
   font-family: 'IBM Plex Mono', monospace; font-size: 2.6rem; font-weight: 700;
-  letter-spacing: 0.35em; color: var(--accent); margin: 0.4rem 0 1rem;
+  letter-spacing: 0.35em; color: var(--accent); margin: 0.4rem 0 0.8rem;
 }
+#lobby-list {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem;
+  margin-bottom: 1.2rem; line-height: 1.9; letter-spacing: 0.1em;
+}
+#lobby-list .lp { color: var(--text); }
+#lobby-list .lp .host-mark { color: var(--muted); font-size: 0.65rem; }
+#lobby-list .empty { color: var(--muted); opacity: 0.6; }
 .toast {
   position: fixed; top: calc(max(1rem, env(safe-area-inset-top)) + 3.2rem);
   left: 50%; transform: translateX(-50%); z-index: 800;
@@ -429,11 +488,27 @@ body.light #theme-toggle .knob::after { content: '☀'; }
   background: var(--panel); border: 1px solid var(--accent); color: var(--text);
   border-radius: 9px; padding: 0.6rem 1rem; opacity: 0;
   transition: opacity 0.3s; pointer-events: none; max-width: 86vw; text-align: center;
+  box-shadow: 0 4px 14px var(--btn-shadow);
 }
 .toast.show { opacity: 1; }
 </style>
 </head>
 <body>
+
+<!-- símbolo del sello: dos naipes superpuestos -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <g id="duo-mark">
+      <rect x="15" y="13" width="28" height="28" rx="3.5"
+            transform="rotate(-11 29 27)"
+            fill="currentColor"/>
+      <rect x="25" y="25" width="28" height="28" rx="3.5"
+            transform="rotate(8 39 39)"
+            fill="var(--bg, #0d0c0a)" stroke="currentColor" stroke-width="2.4"/>
+      <circle cx="39" cy="39" r="4.6" transform="rotate(8 39 39)" fill="currentColor"/>
+    </g>
+  </defs>
+</svg>
 
 <button id="theme-toggle" aria-label="Cambiar tema"><span class="knob"></span></button>
 <button id="sound-toggle" aria-label="Sonido"><span class="ic-on">♪</span><span class="ic-off">✕</span></button>
@@ -441,50 +516,41 @@ body.light #theme-toggle .knob::after { content: '☀'; }
 
 <!-- SPLASH -->
 <div id="app-splash">
-  <div class="seal"><span class="glyph">D</span></div>
+  <div class="seal"><svg viewBox="0 0 64 64"><use href="#duo-mark"/></svg></div>
   <div class="splash-title">Duo</div>
   <div class="splash-sub">memoria &amp; parejas</div>
 </div>
 
 <!-- MENÚ -->
 <div id="screen-menu" class="screen">
-  <div class="seal"><span class="glyph">D</span></div>
+  <div class="seal"><svg viewBox="0 0 64 64"><use href="#duo-mark"/></svg></div>
   <div class="title">Duo</div>
   <div class="tagline">memoria &amp; parejas</div>
   <button class="btn primary" id="btn-solo">Contrarreloj</button>
-  <button class="btn" id="btn-local">Dos jugadores</button>
   <button class="btn" id="btn-online">Online</button>
   <button class="btn" id="btn-install" style="display:none;">⤓ Instalar la app</button>
-  <div class="ver">DUO · V2</div>
-</div>
-
-<!-- CONFIG LOCAL -->
-<div id="screen-local" class="screen">
-  <div class="title" style="font-size:2rem;">Dos jugadores</div>
-  <div class="tagline">mismo móvil · por turnos</div>
-  <input class="field" id="p1-name" maxlength="10" placeholder="JUGADOR 1">
-  <input class="field" id="p2-name" maxlength="10" placeholder="JUGADOR 2">
-  <div class="hint">Tamaño del tablero</div>
-  <div class="seg" id="local-size">
-    <button data-p="8" >8 parejas</button>
-    <button data-p="10" class="on">10 parejas</button>
-    <button data-p="12">12 parejas</button>
-  </div>
-  <button class="btn primary" id="btn-local-start">Empezar</button>
-  <button class="btn" id="btn-local-back">Volver</button>
+  <div class="ver">DUO · V3</div>
 </div>
 
 <!-- CONFIG ONLINE -->
 <div id="screen-online" class="screen">
   <div class="title" style="font-size:2rem;">Online</div>
-  <div class="tagline">dos jugadores · por turnos</div>
+  <div class="tagline">de 2 a 4 jugadores</div>
   <input class="field" id="online-name" maxlength="10" placeholder="TU NOMBRE">
-  <div class="hint">Tamaño (solo al crear sala)</div>
-  <div class="seg" id="online-size">
-    <button data-p="8">8 parejas</button>
-    <button data-p="10" class="on">10 parejas</button>
-    <button data-p="12">12 parejas</button>
+  <div class="hint">Modo de juego</div>
+  <div class="seg" id="online-mode">
+    <button data-m="turnos" class="on">Por turnos</button>
+    <button data-m="velocidad">Velocidad</button>
   </div>
+  <div id="turnos-opts">
+    <div class="hint">Tamaño del tablero</div>
+    <div class="seg" id="online-size">
+      <button data-p="8">8 parejas</button>
+      <button data-p="10" class="on">10 parejas</button>
+      <button data-p="12">12 parejas</button>
+    </div>
+  </div>
+  <div class="hint" id="mode-desc">Acierta pareja: punto y repites. Falla: turno al siguiente.</div>
   <button class="btn primary" id="btn-create">Crear sala</button>
   <input class="field" id="join-code" maxlength="4" placeholder="CÓDIGO">
   <button class="btn" id="btn-join">Unirse</button>
@@ -495,7 +561,9 @@ body.light #theme-toggle .knob::after { content: '☀'; }
 <div id="screen-wait" class="screen">
   <div class="tagline" style="margin-bottom:0.4rem;">código de sala</div>
   <div id="room-code-big">····</div>
-  <div id="online-status">esperando rival…</div>
+  <div id="online-status">esperando jugadores…</div>
+  <div id="lobby-list"></div>
+  <button class="btn primary" id="btn-start-match" style="display:none;" disabled>Empezar</button>
   <button class="btn" id="btn-share">Compartir por WhatsApp</button>
   <button class="btn" id="btn-wait-back">Cancelar</button>
 </div>
@@ -507,12 +575,16 @@ body.light #theme-toggle .knob::after { content: '☀'; }
   <button id="exit-btn">✕ salir</button>
 </div>
 
+<!-- CUENTA ATRÁS -->
+<div id="countdown"><div class="cd-num" id="cd-num">3</div></div>
+
 <!-- INTERLUDIO DE RONDA -->
 <div id="round-splash">
-  <div class="rs-label">ronda</div>
+  <div class="rs-label" id="rs-label">ronda</div>
   <div class="rs-num" id="rs-num">1</div>
   <div class="rs-info" id="rs-info"></div>
   <div class="rs-time" id="rs-time"></div>
+  <div id="rs-table"></div>
   <button class="btn primary" id="rs-go" style="width:auto;padding:0.9rem 2.4rem;">Adelante</button>
 </div>
 
@@ -531,9 +603,9 @@ body.light #theme-toggle .knob::after { content: '☀'; }
   <h2>Cómo se juega</h2>
   <div class="tut-sub">duo · memoria y parejas</div>
   <div class="tut-step"><div class="tut-num">1</div><div class="tut-text">Todas las cartas empiezan boca abajo. Toca una para <b>levantarla</b>, y luego otra. Si son <b>iguales</b>, quedan descubiertas.</div></div>
-  <div class="tut-step"><div class="tut-num">2</div><div class="tut-text"><b>Contrarreloj</b>: 5 rondas, cada una con más cartas que la anterior. El cronómetro corre solo dentro de cada ronda y se detiene entre rondas. Gana tu mejor tiempo total.</div></div>
-  <div class="tut-step"><div class="tut-num">3</div><div class="tut-text"><b>Dos jugadores y Online</b>: por turnos. Si aciertas pareja, <b>sumas punto y repites</b>. Si fallas, le toca al rival. Gana quien reúna más parejas.</div></div>
-  <div class="tut-step"><div class="tut-num">★</div><div class="tut-text">El cronómetro del contrarreloj no arranca hasta que tocas la <b>primera carta</b> de la ronda. Respira, mira el tablero… y ve a por todas.</div></div>
+  <div class="tut-step"><div class="tut-num">2</div><div class="tut-text"><b>Contrarreloj</b>: 5 rondas, cada una con más cartas. Tras la cuenta atrás el cronómetro corre; se detiene al completar la ronda. Gana tu mejor tiempo total.</div></div>
+  <div class="tut-step"><div class="tut-num">3</div><div class="tut-text"><b>Online por turnos</b> (2–4): si aciertas pareja, <b>sumas punto y repites</b>. Si fallas, turno al siguiente. Gana quien reúna más parejas.</div></div>
+  <div class="tut-step"><div class="tut-num">4</div><div class="tut-text"><b>Online velocidad</b> (2–4): todos resuelven <b>el mismo tablero</b> a la vez, 5 rondas crecientes. Cuando todos terminan la ronda, se avanza. Gana el menor tiempo total.</div></div>
   <button class="btn primary" id="tut-close">Entendido</button>
 </div>
 
@@ -542,14 +614,16 @@ body.light #theme-toggle .knob::after { content: '☀'; }
 <script>
 'use strict';
 /* =====================================================================
-   DUO v1 — memoria y parejas
-   Contrarreloj (5 rondas) · Dos jugadores local · Online por turnos
+   DUO v3 — memoria y parejas · claroscuro
+   Contrarreloj · Online 2-4 (Turnos / Velocidad, mismo diagrama)
    ===================================================================== */
 const $ = id => document.getElementById(id);
-const VERSION = 'v1';
+const VERSION = 'v3';
 
 const CARDS = ['ancla','arbol','ballena','barco','calavera','caliz','campana','corona','cuervo','escarabajo','llave','luna','mano','ojo','polilla','reloj','rosa','serpiente','sol','torre'];
 const ROUNDS = [[3,4],[4,4],[4,5],[4,6],[5,8]]; // [cols, filas] -> 6,8,10,12,20 parejas
+const ROLES = ['p0','p1','p2','p3'];
+const CARD_SVG = '<svg viewBox="0 0 64 64"><use href="#duo-mark"/></svg>';
 
 /* ---------- tema ---------- */
 function applyTheme(light) {
@@ -561,7 +635,7 @@ function applyTheme(light) {
 $('theme-toggle').addEventListener('click', () => applyTheme(!document.body.classList.contains('light')));
 applyTheme((function(){ try { return localStorage.getItem('duo_theme') === 'light'; } catch(e){ return false; } })());
 
-/* ---------- sonido (WebAudio, sin ficheros) ---------- */
+/* ---------- sonido ---------- */
 const Snd = {
   ctx: null, muted: false,
   init() {
@@ -583,6 +657,8 @@ const Snd = {
   flip()  { this.tone(660, 0, 0.07, 'triangle', 0.07); },
   match() { this.tone(520, 0, 0.12, 'sine', 0.1); this.tone(780, 0.09, 0.16, 'sine', 0.1); },
   fail()  { this.tone(190, 0, 0.18, 'sawtooth', 0.05); },
+  tick()  { this.tone(540, 0, 0.09, 'square', 0.05); },
+  go()    { this.tone(760, 0, 0.16, 'sine', 0.11); this.tone(1140, 0.05, 0.2, 'sine', 0.08); },
   round() { this.tone(520, 0, 0.1, 'sine', 0.1); this.tone(660, 0.1, 0.1, 'sine', 0.1); this.tone(880, 0.2, 0.2, 'sine', 0.1); },
   win()   { [523, 659, 784, 1047].forEach((f, i) => this.tone(f, i * 0.13, 0.22, 'sine', 0.11)); }
 };
@@ -623,16 +699,40 @@ function show(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('visible'));
   $(id).classList.add('visible');
 }
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+
+/* ---------- cuenta atrás 3·2·1 ---------- */
+let cdTimer = null;
+function countdown(cb) {
+  const ov = $('countdown'), num = $('cd-num');
+  ov.classList.add('visible');
+  let n = 3;
+  const step = () => {
+    if (n <= 0) {
+      ov.classList.remove('visible');
+      Snd.go();
+      cb();
+      return;
+    }
+    num.textContent = n;
+    num.classList.remove('pulse'); void num.offsetWidth; num.classList.add('pulse');
+    Snd.tick();
+    n--;
+    cdTimer = setTimeout(step, 720);
+  };
+  step();
+}
+function cancelCountdown() {
+  clearTimeout(cdTimer);
+  $('countdown').classList.remove('visible');
+}
 
 /* ---------- estado ---------- */
 const G = {
-  mode: null,          // 'solo' | 'local' | 'online'
+  mode: null,          // 'solo' | 'online'
   deck: [], cols: 0, rows: 0, pairs: 0,
-  matched: [], flip: [], lock: false,
-  // solo
-  round: 0, times: [], t0: 0, running: false, raf: 0,
-  // local / online
-  names: ['', ''], scores: [0, 0], turn: 0
+  matched: [], flip: [], lock: false, starting: false,
+  round: 0, times: [], t0: 0, running: false, raf: 0
 };
 
 /* ---------- tablero ---------- */
@@ -643,9 +743,10 @@ function renderBoard() {
   b.style.setProperty('--ar', G.cols / G.rows);
   G.deck.forEach((name, i) => {
     const c = document.createElement('div');
-    c.className = 'card'; c.dataset.i = i;
+    c.className = 'card deal'; c.dataset.i = i;
+    c.style.animationDelay = (i * 14) + 'ms';
     c.innerHTML = '<div class="ci">' +
-      '<div class="face back"><span>D</span></div>' +
+      '<div class="face back">' + CARD_SVG + '</div>' +
       '<div class="face front"><img alt="" draggable="false" src="' + name + '.webp"></div>' +
       '</div>';
     c.addEventListener('click', () => onFlip(i));
@@ -653,40 +754,31 @@ function renderBoard() {
   });
 }
 function cardEl(i) { return $('board').children[i]; }
-function setFlipped(i, on) { cardEl(i).classList.toggle('flipped', on); }
+function lift(i) {
+  const c = cardEl(i); if (!c) return;
+  c.classList.remove('lift'); void c.offsetWidth; c.classList.add('lift');
+  setTimeout(() => c.classList.remove('lift'), 600);
+}
+function setFlipped(i, on) {
+  const c = cardEl(i); if (!c) return;
+  if (c.classList.contains('flipped') !== on) lift(i);
+  c.classList.toggle('flipped', on);
+}
 function setMatched(i) { const c = cardEl(i); c.classList.remove('flipped'); c.classList.add('matched'); }
 
 /* ---------- HUD ---------- */
 function renderHud() {
   const h = $('hud');
-  if (G.mode === 'solo') {
+  if (G.mode === 'solo' || (G.mode === 'online' && Online.gameMode === 'velocidad')) {
     h.innerHTML =
       '<div class="hud-block"><div class="hud-label">ronda</div><div class="hud-value">' + (G.round + 1) + '/5</div></div>' +
       '<div class="hud-block"><div class="hud-label">tiempo</div><div class="hud-value accent" id="clock">0.0</div></div>' +
       '<div class="hud-block"><div class="hud-label">total</div><div class="hud-value" id="total-clock">' + fmtTime(sumTimes()) + '</div></div>';
   } else {
-    h.innerHTML =
-      chipHtml(0) +
-      '<div class="hud-block"><div class="hud-label">parejas</div><div class="hud-value" id="pairs-left">' + pairsLeft() + '</div></div>' +
-      chipHtml(1);
-    updateChips();
+    h.innerHTML = Online.order.map(r => Online.chipHtml(r)).join('');
+    Online.updateChips();
   }
 }
-function chipHtml(p) {
-  return '<div class="pchip" id="chip-' + p + '"><span class="p-name">' + escapeHtml(G.names[p]) + '</span><span class="p-score">' + G.scores[p] + '</span></div>';
-}
-function updateChips() {
-  for (let p = 0; p < 2; p++) {
-    const el = $('chip-' + p); if (!el) continue;
-    el.classList.toggle('turn', G.turn === p);
-    el.querySelector('.p-score').textContent = G.scores[p];
-  }
-  const pl = $('pairs-left'); if (pl) pl.textContent = pairsLeft();
-}
-function pairsLeft() { return G.pairs - (G.matched.filter(Boolean).length / 2); }
-function escapeHtml(s) { return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
-
-/* ---------- cronómetro (solo) ---------- */
 function sumTimes() { return G.times.reduce((a, b) => a + b, 0); }
 function tick() {
   if (!G.running) return;
@@ -699,6 +791,7 @@ function startClock() {
   cancelAnimationFrame(G.raf); G.raf = requestAnimationFrame(tick);
 }
 function stopClock() {
+  if (!G.running) return 0;
   G.running = false; cancelAnimationFrame(G.raf);
   return performance.now() - G.t0;
 }
@@ -710,23 +803,28 @@ function soloStart() {
   G.mode = 'solo'; G.round = 0; G.times = [];
   soloPrepRound();
 }
-function soloPrepRound() {
-  const [c, r] = ROUNDS[G.round];
-  G.cols = c; G.rows = r; G.pairs = (c * r) / 2;
-  G.deck = buildDeck(G.pairs);
+function setupRound(cols, rows, deck) {
+  G.cols = cols; G.rows = rows; G.pairs = (cols * rows) / 2;
+  G.deck = deck || buildDeck(G.pairs);
   G.matched = new Array(G.deck.length).fill(false);
   G.flip = []; G.lock = false; G.running = false;
   renderBoard(); renderHud();
+}
+function soloPrepRound() {
+  const [c, r] = ROUNDS[G.round];
+  setupRound(c, r);
   show('screen-game');
+  $('rs-label').textContent = 'ronda';
   $('rs-num').textContent = G.round + 1;
   $('rs-info').textContent = G.pairs + ' parejas · ' + c + '×' + r;
-  $('rs-time').innerHTML = G.round === 0 ? 'el tiempo arranca con la primera carta'
-    : 'acumulado: <b>' + fmtTime(sumTimes()) + '</b>';
+  $('rs-time').innerHTML = G.round === 0 ? '' : 'acumulado: <b>' + fmtTime(sumTimes()) + '</b>';
+  $('rs-table').innerHTML = '';
+  $('rs-go').style.display = '';
   $('round-splash').classList.add('visible');
 }
 $('rs-go').addEventListener('click', () => {
   $('round-splash').classList.remove('visible');
-  Snd.round();
+  if (G.mode === 'solo') countdown(() => { startClock(); });
 });
 function soloRoundEnd() {
   const t = stopClock();
@@ -758,17 +856,17 @@ function soloEnd() {
   $('end-detail').innerHTML = '<table class="times-table">' + rows + '</table>';
   $('record-tag').style.display = isRecord ? 'block' : 'none';
   $('btn-rematch').textContent = 'Otra vez';
+  $('btn-rematch').style.display = '';
   show('screen-end');
 }
 
 /* =====================================================================
-   NÚCLEO DE VOLTEO
+   NÚCLEO DE VOLTEO (solo + velocidad online: tablero propio)
    ===================================================================== */
 function onFlip(i) {
-  if (G.lock || G.matched[i] || G.flip.includes(i)) return;
-  if (G.mode === 'online') { Online.tryFlip(i); return; }
-  if (G.mode === 'solo' && !G.running && $('round-splash').classList.contains('visible')) return;
-  if (G.mode === 'solo' && !G.running) startClock();
+  if (G.mode === 'online' && Online.gameMode === 'turnos') { Online.tryFlip(i); return; }
+  if (G.lock || G.starting || G.matched[i] || G.flip.includes(i)) return;
+  if (!G.running) return; // el reloj arranca con la cuenta atrás
 
   Snd.flip();
   setFlipped(i, true);
@@ -782,10 +880,9 @@ function onFlip(i) {
       G.matched[a] = G.matched[b] = true;
       setMatched(a); setMatched(b);
       Snd.match();
-      if (G.mode === 'local') { G.scores[G.turn]++; updateChips(); }
       G.flip = []; G.lock = false;
       if (G.matched.every(Boolean)) {
-        if (G.mode === 'solo') soloRoundEnd(); else localEnd();
+        if (G.mode === 'solo') soloRoundEnd(); else Online.raceRoundEnd();
       }
     } else {
       cardEl(a).classList.add('shake'); cardEl(b).classList.add('shake');
@@ -793,7 +890,6 @@ function onFlip(i) {
       setTimeout(() => {
         setFlipped(a, false); setFlipped(b, false);
         cardEl(a).classList.remove('shake'); cardEl(b).classList.remove('shake');
-        if (G.mode === 'local') { G.turn = 1 - G.turn; updateChips(); }
         G.flip = []; G.lock = false;
       }, 520);
     }
@@ -801,52 +897,7 @@ function onFlip(i) {
 }
 
 /* =====================================================================
-   DOS JUGADORES (local)
-   ===================================================================== */
-let localPairs = 10;
-$('local-size').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  localPairs = parseInt(b.dataset.p, 10);
-  $('local-size').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
-});
-function gridFor(pairs) {
-  return { 8: [4, 4], 10: [4, 5], 12: [4, 6], 20: [5, 8] }[pairs] || [4, 5];
-}
-$('btn-local-start').addEventListener('click', () => {
-  G.mode = 'local';
-  G.names = [($('p1-name').value.trim() || 'Jugador 1'), ($('p2-name').value.trim() || 'Jugador 2')];
-  G.scores = [0, 0]; G.turn = 0;
-  const [c, r] = gridFor(localPairs);
-  G.cols = c; G.rows = r; G.pairs = localPairs;
-  G.deck = buildDeck(G.pairs);
-  G.matched = new Array(G.deck.length).fill(false);
-  G.flip = []; G.lock = false;
-  renderBoard(); renderHud();
-  show('screen-game');
-});
-function localEnd() {
-  Snd.win();
-  const [s0, s1] = G.scores;
-  $('end-label').textContent = 'partida terminada';
-  $('end-big').classList.remove('accent');
-  if (s0 === s1) {
-    $('end-big').textContent = 'Empate';
-  } else {
-    $('end-big').textContent = G.names[s0 > s1 ? 0 : 1];
-    $('end-big').classList.add('accent');
-  }
-  $('end-detail').innerHTML =
-    '<table class="times-table">' +
-    '<tr><td>' + escapeHtml(G.names[0]) + '</td><td>' + s0 + '</td></tr>' +
-    '<tr><td>' + escapeHtml(G.names[1]) + '</td><td>' + s1 + '</td></tr>' +
-    '</table>';
-  $('record-tag').style.display = 'none';
-  $('btn-rematch').textContent = 'Revancha';
-  show('screen-end');
-}
-
-/* =====================================================================
-   ONLINE (Firebase RTDB · host-autoritativo por turnos)
+   ONLINE (Firebase RTDB · 2-4 jugadores · turnos / velocidad)
    Sala: /g/duo/rooms/{CODE}
    ===================================================================== */
 const firebaseConfig = {
@@ -860,9 +911,11 @@ const firebaseConfig = {
 };
 
 const Online = {
-  db: null, ref: null, code: null, role: null, // 'h' | 'g'
-  pairs: 10, listening: false, lastState: null, resolveTimer: null,
-  ended: false,
+  db: null, ref: null, code: null, role: null,
+  gameMode: 'turnos', pairs: 10,
+  order: [], gid: 0, lastGid: null, curRound: -1, roundDone: false,
+  listening: false, lastState: null, resolveTimer: null,
+  ended: false, prevTurn: null,
 
   init() {
     if (this.db) return true;
@@ -876,31 +929,41 @@ const Online = {
     let c = ''; for (let i = 0; i < 4; i++) c += A[(Math.random() * A.length) | 0];
     return c;
   },
-  myName() { return $('online-name').value.trim() || (this.role === 'h' ? 'Anfitrión' : 'Invitado'); },
+  myName() { return $('online-name').value.trim() || 'Jugador'; },
+  nameOf(room, r) {
+    return (room.players && room.players[r] && room.players[r].name) || r.toUpperCase();
+  },
+  isOn(room, r) { return !!(room.players && room.players[r] && room.players[r].on); },
+
+  buildRacePayload() {
+    return { decks: ROUNDS.map(([c, r]) => buildDeck((c * r) / 2)) };
+  },
 
   create() {
     if (!this.init()) { toast('Sin conexión con el servidor'); return; }
-    this.role = 'h'; this.code = this.genCode(); this.ended = false;
+    this.resetLocal();
+    this.role = 'p0'; this.code = this.genCode();
     this.ref = this.db.ref('g/duo/rooms/' + this.code);
-    const [c, r] = gridFor(this.pairs);
     const room = {
-      v: 1, createdAt: firebase.database.ServerValue.TIMESTAMP,
-      pairs: this.pairs, cols: c, rows: r,
-      deck: buildDeck(this.pairs),
-      state: 'waiting', turn: 'h',
-      scores: { h: 0, g: 0 },
-      matched: {}, flips: null,
-      players: { h: { name: this.myName() } },
-      rematch: {}
+      v: 3, createdAt: firebase.database.ServerValue.TIMESTAMP,
+      mode: this.gameMode, gid: Date.now(),
+      state: 'waiting',
+      players: { p0: { name: this.myName(), on: true } },
+      scores: {}, matched: {}, flips: null, times: {}, rematch: {}
     };
+    if (this.gameMode === 'turnos') {
+      const [c, r] = { 8: [4, 4], 10: [4, 5], 12: [4, 6] }[this.pairs];
+      room.pairs = this.pairs; room.cols = c; room.rows = r;
+      room.deck = buildDeck(this.pairs);
+    } else {
+      Object.assign(room, this.buildRacePayload());
+      room.round = 0;
+    }
     this.ref.set(room).then(() => {
-      this.ref.child('players/h/on').set(true);
-      this.ref.child('players/h/on').onDisconnect().remove();
-      // si el host se va antes de empezar, borrar la sala
-      this.ref.onDisconnect().remove();
+      this.ref.child('players/p0/on').onDisconnect().remove();
+      this.ref.onDisconnect().remove(); // se cancela al empezar
       this.listen();
       $('room-code-big').textContent = this.code;
-      $('online-status').textContent = 'esperando rival…';
       show('screen-wait');
     }).catch(() => toast('No se pudo crear la sala'));
   },
@@ -909,20 +972,51 @@ const Online = {
     if (!this.init()) { toast('Sin conexión con el servidor'); return; }
     const code = $('join-code').value.trim().toUpperCase();
     if (code.length !== 4) { toast('Código de 4 letras'); return; }
-    this.role = 'g'; this.code = code; this.ended = false;
+    this.resetLocal();
+    this.code = code;
     this.ref = this.db.ref('g/duo/rooms/' + code);
-    this.ref.get().then(snap => {
-      const room = snap.val();
-      if (!room) { toast('Sala no encontrada'); return; }
-      if (room.players && room.players.g && room.players.g.on) { toast('Sala llena'); return; }
-      const upd = {};
-      upd['players/g'] = { name: this.myName(), on: true };
-      upd['state'] = 'playing';
-      this.ref.update(upd).then(() => {
-        this.ref.child('players/g/on').onDisconnect().remove();
-        this.listen();
-      });
-    }).catch(() => toast('No se pudo entrar'));
+    const name = this.myName();
+    this.ref.child('players').transaction(players => {
+      if (players === null) return; // sala inexistente: abortar
+      for (let k = 1; k < ROLES.length; k++) {
+        const r = ROLES[k];
+        if (!players[r] || !players[r].on) {
+          players[r] = { name: name, on: true };
+          players[r]._claim = r; // marca temporal para identificar el slot ganado
+          return players;
+        }
+      }
+      return; // llena: abortar
+    }).then(res => {
+      if (!res.committed) {
+        this.ref.get().then(s => toast(s.exists() ? 'Sala llena o en juego' : 'Sala no encontrada'));
+        this.ref = null;
+        return;
+      }
+      const players = res.snapshot.val() || {};
+      let mine = null;
+      for (const r of ROLES) {
+        if (players[r] && players[r]._claim === r && players[r].name === name) mine = r;
+      }
+      if (!mine) { toast('No se pudo entrar'); this.ref = null; return; }
+      this.role = mine;
+      this.ref.child('players/' + mine + '/_claim').remove();
+      this.ref.child('players/' + mine + '/on').onDisconnect().remove();
+      this.listen();
+      $('room-code-big').textContent = code;
+      show('screen-wait');
+    }).catch(() => { toast('No se pudo entrar'); this.ref = null; });
+  },
+
+  startMatch() {
+    const room = this.lastState;
+    if (!room || this.role !== 'p0') return;
+    const order = ROLES.filter(r => this.isOn(room, r));
+    if (order.length < 2) { toast('Faltan jugadores'); return; }
+    this.ref.onDisconnect().cancel();
+    const upd = { state: 'playing', order: order };
+    if (room.mode === 'turnos') upd.turn = order[0];
+    this.ref.update(upd);
   },
 
   listen() {
@@ -933,7 +1027,7 @@ const Online = {
 
   onRoom(room) {
     if (!room) {
-      if (!this.ended && (G.mode === 'online' || $('screen-wait').classList.contains('visible'))) {
+      if (this.ref && !this.ended) {
         toast('La sala se ha cerrado');
         this.cleanup(); toMenu();
       }
@@ -941,85 +1035,138 @@ const Online = {
     }
     this.lastState = room;
 
-    if (room.state === 'waiting') return;
+    if (room.state === 'waiting') { this.renderLobby(room); return; }
 
-    // arranque / sincronización de partida
-    if (G.mode !== 'online' || G.deck.length !== room.deck.length) {
-      // el host ya no debe borrar la sala al desconectarse: la partida ha empezado
-      if (this.role === 'h') this.ref.onDisconnect().cancel();
+    // inicialización / resincronización de partida
+    if (this.lastGid !== room.gid || G.mode !== 'online') {
+      this.lastGid = room.gid;
+      this.ended = false; this.curRound = -1; this.roundDone = false; this.prevTurn = null;
       G.mode = 'online';
-      G.deck = room.deck.slice();
-      G.cols = room.cols; G.rows = room.rows; G.pairs = room.pairs;
-      G.names = [
-        (room.players && room.players.h && room.players.h.name) || 'Anfitrión',
-        (room.players && room.players.g && room.players.g.name) || 'Invitado'
-      ];
-      renderBoard();
-      show('screen-game');
-      toast(this.myTurn(room) ? 'Empiezas tú' : 'Empieza el rival');
+      this.gameMode = room.mode;
+      this.order = room.order || ROLES.filter(r => room.players && room.players[r]);
+      cancelCountdown();
+      $('round-splash').classList.remove('visible');
+      if (room.mode === 'turnos') {
+        G.deck = (room.deck || []).slice();
+        G.cols = room.cols; G.rows = room.rows; G.pairs = room.pairs;
+        G.matched = new Array(G.deck.length).fill(false);
+        G.flip = []; G.round = 0; G.times = [];
+        renderBoard(); renderHud();
+        show('screen-game');
+        G.starting = true;
+        countdown(() => { G.starting = false; });
+      }
+      // en velocidad, el arranque de ronda lo gestiona syncRace
     }
 
-    // estado derivado
-    G.scores = [ (room.scores && room.scores.h) || 0, (room.scores && room.scores.g) || 0 ];
-    G.turn = room.turn === 'h' ? 0 : 1;
+    if (room.state === 'end') {
+      if (room.mode === 'turnos') this.endTurnos(room); else this.endRace(room);
+      return;
+    }
+
+    if (room.mode === 'turnos') this.syncTurnos(room);
+    else this.syncRace(room);
+  },
+
+  /* ----- lobby ----- */
+  renderLobby(room) {
+    const rows = [];
+    for (const r of ROLES) {
+      if (room.players && room.players[r]) {
+        const off = !this.isOn(room, r);
+        rows.push('<div class="lp' + (off ? ' empty' : '') + '">◈ ' + escapeHtml(this.nameOf(room, r)) +
+          (r === 'p0' ? ' <span class="host-mark">· anfitrión</span>' : '') + '</div>');
+      } else {
+        rows.push('<div class="empty">· libre ·</div>');
+      }
+    }
+    $('lobby-list').innerHTML = rows.join('');
+    const count = ROLES.filter(r => this.isOn(room, r)).length;
+    $('online-status').textContent = room.mode === 'turnos'
+      ? 'por turnos · ' + count + '/4'
+      : 'velocidad · ' + count + '/4';
+    const sb = $('btn-start-match');
+    if (this.role === 'p0') {
+      sb.style.display = '';
+      sb.disabled = count < 2;
+    } else {
+      sb.style.display = 'none';
+    }
+    if (!$('screen-wait').classList.contains('visible') &&
+        !$('screen-game').classList.contains('visible')) {
+      show('screen-wait');
+    }
+  },
+
+  /* ----- turnos ----- */
+  chipHtml(r) {
+    return '<div class="pchip" id="chip-' + r + '"><span class="p-name"></span><span class="p-score">0</span></div>';
+  },
+  updateChips() {
+    const room = this.lastState; if (!room) return;
+    for (const r of this.order) {
+      const el = $('chip-' + r); if (!el) continue;
+      el.querySelector('.p-name').textContent = this.nameOf(room, r);
+      el.querySelector('.p-score').textContent = (room.scores && room.scores[r]) || 0;
+      el.classList.toggle('turn', room.turn === r);
+      el.classList.toggle('off', !this.isOn(room, r));
+    }
+  },
+  syncTurnos(room) {
     const matched = room.matched || {};
     G.matched = G.deck.map((_, i) => !!matched[i]);
     const flips = room.flips || [];
     G.flip = flips.slice();
     G.lock = flips.length >= 2;
 
-    // pintar
-    renderHud();
+    this.updateChips();
     for (let i = 0; i < G.deck.length; i++) {
       const el = cardEl(i); if (!el) continue;
       if (G.matched[i]) {
-        if (!el.classList.contains('matched')) setMatched(i);
+        if (!el.classList.contains('matched')) { setMatched(i); }
       } else {
         el.classList.remove('matched');
         setFlipped(i, flips.includes(i));
       }
     }
 
-    // presencia del rival
-    const opp = this.role === 'h' ? 'g' : 'h';
-    if (room.state === 'playing' && room.players && room.players[opp] && !room.players[opp].on) {
-      $('online-status').textContent = '';
-      toast('El rival se ha desconectado');
-    }
+    if (room.turn === this.role && this.prevTurn !== room.turn && !G.starting) toast('Te toca');
+    this.prevTurn = room.turn;
 
     // resolución: la ejecuta quien tiene el turno
-    if (room.state === 'playing' && flips.length === 2 && this.isMyRole(room.turn)) {
-      this.scheduleResolve(room);
-    }
+    if (flips.length === 2 && room.turn === this.role) this.scheduleResolve(room);
 
-    if (room.state === 'end') this.onEnd(room);
-
-    // revancha
-    if (room.state === 'end' && room.rematch && room.rematch.h && room.rematch.g && this.role === 'h') {
-      this.hostRematch(room);
+    // guardia del host: si el jugador con turno se ha desconectado, saltarlo
+    if (this.role === 'p0' && flips.length === 0 && room.turn && !this.isOn(room, room.turn)) {
+      const next = this.nextOn(room, room.turn);
+      if (next && next !== room.turn) this.ref.update({ turn: next });
     }
   },
-
-  isMyRole(r) { return r === this.role; },
-  myTurn(room) { return (room || this.lastState || {}).turn === this.role; },
-
+  nextOn(room, from) {
+    const order = this.order;
+    let idx = order.indexOf(from);
+    for (let k = 1; k <= order.length; k++) {
+      const r = order[(idx + k) % order.length];
+      if (this.isOn(room, r)) return r;
+    }
+    return null;
+  },
   tryFlip(i) {
     const room = this.lastState;
-    if (!room || room.state !== 'playing') return;
-    if (!this.myTurn(room)) { toast('Turno del rival'); return; }
+    if (!room || room.state !== 'playing' || G.starting) return;
+    if (room.turn !== this.role) { toast('Turno de ' + this.nameOf(room, room.turn)); return; }
     const flips = room.flips || [];
     if (flips.length >= 2 || flips.includes(i)) return;
     if (room.matched && room.matched[i]) return;
     Snd.flip();
     this.ref.child('flips').set(flips.concat([i]));
   },
-
   scheduleResolve(room) {
     if (this.resolveTimer) return;
     this.resolveTimer = setTimeout(() => {
       this.resolveTimer = null;
       const cur = this.lastState;
-      if (!cur || !cur.flips || cur.flips.length !== 2) return;
+      if (!cur || !cur.flips || cur.flips.length !== 2 || cur.turn !== this.role) return;
       const [a, b] = cur.flips;
       const upd = { flips: null };
       if (G.deck[a] === G.deck[b]) {
@@ -1028,56 +1175,188 @@ const Online = {
         upd['scores/' + this.role] = ((cur.scores && cur.scores[this.role]) || 0) + 1;
         Snd.match();
         const total = Object.keys(cur.matched || {}).length + 2;
-        if (total === G.deck.length) upd['state'] = 'end';
+        if (total === G.deck.length) upd.state = 'end';
       } else {
-        upd['turn'] = this.role === 'h' ? 'g' : 'h';
+        const next = this.nextOn(cur, this.role);
+        if (next) upd.turn = next;
         Snd.fail();
       }
       this.ref.update(upd);
     }, 900);
   },
-
-  onEnd(room) {
+  endTurnos(room) {
     if (this.ended) return;
     this.ended = true;
+    cancelCountdown();
     Snd.win();
-    const sH = (room.scores && room.scores.h) || 0;
-    const sG = (room.scores && room.scores.g) || 0;
-    const me = this.role === 'h' ? sH : sG, opp = this.role === 'h' ? sG : sH;
-    $('end-label').textContent = 'partida online';
+    const scores = this.order.map(r => ({ r, s: (room.scores && room.scores[r]) || 0 }))
+      .sort((a, b) => b.s - a.s);
+    const top = scores[0].s;
+    const winners = scores.filter(x => x.s === top);
+    $('end-label').textContent = 'online · por turnos';
     $('end-big').classList.remove('accent');
-    if (sH === sG) $('end-big').textContent = 'Empate';
-    else {
-      $('end-big').textContent = me > opp ? '¡Has ganado!' : 'Has perdido';
-      if (me > opp) $('end-big').classList.add('accent');
+    if (winners.length > 1) {
+      $('end-big').textContent = 'Empate';
+    } else {
+      $('end-big').textContent = this.nameOf(room, winners[0].r);
+      if (winners[0].r === this.role) $('end-big').classList.add('accent');
     }
-    $('end-detail').innerHTML =
-      '<table class="times-table">' +
-      '<tr><td>' + escapeHtml(G.names[0]) + '</td><td>' + sH + '</td></tr>' +
-      '<tr><td>' + escapeHtml(G.names[1]) + '</td><td>' + sG + '</td></tr>' +
-      '</table>';
+    $('end-detail').innerHTML = this.rankTable(scores.map(x => ({
+      label: this.nameOf(room, x.r), value: String(x.s), me: x.r === this.role
+    })));
     $('record-tag').style.display = 'none';
     $('btn-rematch').textContent = 'Revancha';
+    $('btn-rematch').style.display = '';
     show('screen-end');
   },
 
+  /* ----- velocidad (carrera, mismo diagrama para todos) ----- */
+  syncRace(room) {
+    const round = room.round || 0;
+    if (this.curRound !== round) {
+      // nueva ronda: mismo mazo para todos
+      this.curRound = round;
+      this.roundDone = false;
+      G.round = round;
+      G.times = this.myTimes(room);
+      const [c, r] = ROUNDS[round];
+      const deck = (room.decks && room.decks[round]) ? room.decks[round].slice() : buildDeck((c * r) / 2);
+      setupRound(c, r, deck);
+      show('screen-game');
+      $('round-splash').classList.remove('visible');
+      G.starting = true;
+      countdown(() => { G.starting = false; startClock(); });
+      return;
+    }
+    // si estoy en espera entre rondas, refrescar la tabla en vivo
+    if (this.roundDone) this.renderRaceWait(room);
+
+    // el host avanza cuando todos los activos han terminado la ronda
+    if (this.role === 'p0') this.hostAdvance(room);
+  },
+  myTimes(room) {
+    const t = (room.times && room.times[this.role]) || {};
+    const arr = [];
+    for (let i = 0; i < 5; i++) { if (t[i] != null) arr.push(t[i]); }
+    return arr;
+  },
+  raceRoundEnd() {
+    const t = stopClock();
+    this.roundDone = true;
+    G.times.push(t);
+    const upd = {};
+    upd['times/' + this.role + '/' + this.curRound] = Math.round(t);
+    this.ref.update(upd);
+    Snd.round();
+    const room = this.lastState;
+    $('rs-label').textContent = 'ronda ' + (this.curRound + 1) + ' de 5';
+    $('rs-num').textContent = fmtTime(t);
+    $('rs-num').style.fontSize = 'clamp(2.6rem, 12vw, 5rem)';
+    $('rs-info').textContent = this.curRound < 4 ? 'esperando a los demás…' : 'última ronda completada';
+    $('rs-time').innerHTML = 'acumulado: <b>' + fmtTime(sumTimes()) + '</b>';
+    $('rs-go').style.display = 'none';
+    this.renderRaceWait(room);
+    $('round-splash').classList.add('visible');
+  },
+  renderRaceWait(room) {
+    const rows = this.order.map(r => {
+      const t = (room.times && room.times[r] && room.times[r][this.curRound]);
+      const off = !this.isOn(room, r);
+      return {
+        label: this.nameOf(room, r),
+        value: off ? '— fuera —' : (t != null ? fmtTime(t) : 'jugando…'),
+        me: r === this.role
+      };
+    });
+    $('rs-table').innerHTML = this.rankTable(rows);
+  },
+  hostAdvance(room) {
+    const round = room.round || 0;
+    const active = this.order.filter(r => this.isOn(room, r));
+    if (active.length === 0) return;
+    const allDone = active.every(r => room.times && room.times[r] && room.times[r][round] != null);
+    if (!allDone) return;
+    if (this._advancing) return;
+    this._advancing = true;
+    setTimeout(() => {
+      this._advancing = false;
+      const cur = this.lastState;
+      if (!cur || (cur.round || 0) !== round || cur.state !== 'playing') return;
+      if (round < 4) this.ref.update({ round: round + 1 });
+      else this.ref.update({ state: 'end' });
+    }, 2400);
+  },
+  totalOf(room, r) {
+    const t = (room.times && room.times[r]) || {};
+    let sum = 0, n = 0;
+    for (let i = 0; i < 5; i++) { if (t[i] != null) { sum += t[i]; n++; } }
+    return { sum, complete: n === 5 };
+  },
+  endRace(room) {
+    if (this.ended) return;
+    this.ended = true;
+    cancelCountdown();
+    stopClock();
+    $('round-splash').classList.remove('visible');
+    $('rs-num').style.fontSize = '';
+    Snd.win();
+    const rank = this.order.map(r => {
+      const t = this.totalOf(room, r);
+      return { r, sum: t.sum, complete: t.complete };
+    }).sort((a, b) => (b.complete - a.complete) || (a.sum - b.sum));
+    $('end-label').textContent = 'online · velocidad';
+    $('end-big').classList.remove('accent');
+    const w = rank[0];
+    $('end-big').textContent = this.nameOf(room, w.r);
+    if (w.r === this.role) $('end-big').classList.add('accent');
+    const medals = ['①', '②', '③', '④'];
+    $('end-detail').innerHTML = this.rankTable(rank.map((x, i) => ({
+      medal: medals[i] || '',
+      label: this.nameOf(room, x.r),
+      value: x.complete ? fmtTime(x.sum) : 'sin terminar',
+      me: x.r === this.role
+    })));
+    $('record-tag').style.display = 'none';
+    $('btn-rematch').textContent = 'Revancha';
+    $('btn-rematch').style.display = '';
+    show('screen-end');
+  },
+  rankTable(rows) {
+    return '<table class="times-table">' + rows.map(x =>
+      '<tr' + (x.me ? ' class="me"' : '') + '>' +
+      (x.medal !== undefined ? '<td class="medal">' + x.medal + '</td>' : '') +
+      '<td>' + escapeHtml(x.label) + '</td><td>' + x.value + '</td></tr>'
+    ).join('') + '</table>';
+  },
+
+  /* ----- revancha / salida ----- */
   askRematch() {
     if (!this.ref) return;
     this.ref.child('rematch/' + this.role).set(true);
-    $('end-label').textContent = 'esperando al rival…';
+    $('end-label').textContent = 'esperando a los demás…';
+    this.watchRematch();
   },
-
-  hostRematch(room) {
+  watchRematch() {
+    const room = this.lastState;
+    if (!room || this.role !== 'p0') return;
+  },
+  maybeHostRematch(room) {
+    if (this.role !== 'p0' || room.state !== 'end') return;
+    const active = this.order.filter(r => this.isOn(room, r));
+    if (active.length < 2) return;
+    const all = active.every(r => room.rematch && room.rematch[r]);
+    if (!all) return;
     const upd = {
-      deck: buildDeck(room.pairs),
-      matched: null, flips: null, rematch: null,
-      scores: { h: 0, g: 0 },
-      turn: Math.random() < 0.5 ? 'h' : 'g',
-      state: 'playing'
+      gid: Date.now(), state: 'playing', order: active,
+      matched: null, flips: null, rematch: null, scores: {}, times: {}
     };
-    this.ended = false;
-    // forzar resincronización completa en ambos clientes
-    G.mode = null; G.deck = [];
+    if (room.mode === 'turnos') {
+      upd.deck = buildDeck(room.pairs);
+      upd.turn = active[(Math.random() * active.length) | 0];
+    } else {
+      Object.assign(upd, this.buildRacePayload());
+      upd.round = 0;
+    }
     this.ref.update(upd);
   },
 
@@ -1085,20 +1364,43 @@ const Online = {
     if (this.ref) {
       const room = this.lastState;
       try {
-        if (room && room.state === 'waiting' && this.role === 'h') this.ref.remove();
-        else this.ref.child('players/' + this.role + '/on').remove();
+        if (room && room.state === 'waiting' && this.role === 'p0') this.ref.remove();
+        else if (this.role) this.ref.child('players/' + this.role + '/on').remove();
       } catch (e) {}
     }
     this.cleanup();
   },
+  resetLocal() {
+    this.order = []; this.lastGid = null; this.curRound = -1;
+    this.roundDone = false; this.ended = false; this.prevTurn = null;
+    this.lastState = null; this._advancing = false;
+  },
   cleanup() {
     if (this.ref) { try { this.ref.off(); this.ref.onDisconnect().cancel(); } catch (e) {} }
     if (this.resolveTimer) { clearTimeout(this.resolveTimer); this.resolveTimer = null; }
-    this.ref = null; this.code = null; this.listening = false;
-    this.lastState = null; this.ended = false;
+    this.ref = null; this.code = null; this.role = null; this.listening = false;
+    this.resetLocal();
   }
 };
 
+// el host vigila la revancha dentro del listener principal
+const _origOnRoom = Online.onRoom.bind(Online);
+Online.onRoom = function (room) {
+  _origOnRoom(room);
+  if (room) this.maybeHostRematch(room);
+};
+
+/* ---------- selección de modo / tamaño ---------- */
+$('online-mode').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  Online.gameMode = b.dataset.m;
+  $('online-mode').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  const turnos = Online.gameMode === 'turnos';
+  $('turnos-opts').style.display = turnos ? '' : 'none';
+  $('mode-desc').textContent = turnos
+    ? 'Acierta pareja: punto y repites. Falla: turno al siguiente.'
+    : '5 rondas, el mismo tablero para todos. Gana el menor tiempo total.';
+});
 $('online-size').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   Online.pairs = parseInt(b.dataset.p, 10);
@@ -1106,6 +1408,7 @@ $('online-size').addEventListener('click', e => {
 });
 $('btn-create').addEventListener('click', () => Online.create());
 $('btn-join').addEventListener('click', () => Online.join());
+$('btn-start-match').addEventListener('click', () => Online.startMatch());
 $('btn-share').addEventListener('click', () => {
   const url = location.origin + location.pathname;
   const msg = '¡Únete a mi sala de Duo! Código: ' + Online.code + '\n' + url;
@@ -1115,14 +1418,14 @@ $('btn-share').addEventListener('click', () => {
 /* ---------- navegación ---------- */
 function toMenu() {
   stopClock();
-  G.mode = null; G.deck = [];
+  cancelCountdown();
+  G.mode = null; G.deck = []; G.starting = false;
   $('round-splash').classList.remove('visible');
+  $('rs-num').style.fontSize = '';
   show('screen-menu');
 }
 $('btn-solo').addEventListener('click', () => soloStart());
-$('btn-local').addEventListener('click', () => show('screen-local'));
 $('btn-online').addEventListener('click', () => show('screen-online'));
-$('btn-local-back').addEventListener('click', toMenu);
 $('btn-online-back').addEventListener('click', toMenu);
 $('btn-wait-back').addEventListener('click', () => { Online.leave(); toMenu(); });
 $('exit-btn').addEventListener('click', () => {
@@ -1135,7 +1438,6 @@ $('btn-end-menu').addEventListener('click', () => {
 });
 $('btn-rematch').addEventListener('click', () => {
   if (G.mode === 'solo') { soloStart(); return; }
-  if (G.mode === 'local') { $('btn-local-start').click(); return; }
   Online.askRematch();
 });
 $('help-btn').addEventListener('click', () => $('tutorial-overlay').classList.add('visible'));
